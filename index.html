@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vereinsabstimmung</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Vereinsabstimmung</h1>
+        <p class="subtitle">Abstimmungstool für Vereinssitzungen</p>
+    </header>
+
+    <main>
+        <!-- Sitzungs-Setup -->
+        <section id="session-setup" class="card">
+            <h2>Sitzung einrichten</h2>
+            <div class="form-group">
+                <label for="meeting-title">Sitzungstitel</label>
+                <input type="text" id="meeting-title" placeholder="z.B. Jahreshauptversammlung 2026">
+            </div>
+            <div class="form-group">
+                <label for="voter-count">Anzahl Stimmberechtigte</label>
+                <input type="number" id="voter-count" min="1" value="10">
+            </div>
+            <button id="start-session-btn" class="btn btn-primary">Sitzung starten</button>
+        </section>
+
+        <!-- Aktive Sitzung -->
+        <section id="active-session" class="hidden">
+            <div class="session-header card">
+                <div class="session-info">
+                    <h2 id="session-title"></h2>
+                    <span class="badge" id="voter-badge"></span>
+                </div>
+                <button id="end-session-btn" class="btn btn-danger btn-small">Sitzung beenden</button>
+            </div>
+
+            <!-- Neue Abstimmung erstellen -->
+            <div id="new-vote-section" class="card">
+                <h3>Neue Abstimmung</h3>
+                <div class="form-group">
+                    <label for="vote-topic">Thema / Antrag</label>
+                    <input type="text" id="vote-topic" placeholder="z.B. Erhöhung des Mitgliedsbeitrags um 5€">
+                </div>
+                <div class="form-group">
+                    <label for="vote-description">Beschreibung (optional)</label>
+                    <textarea id="vote-description" rows="2" placeholder="Weitere Details zum Antrag..."></textarea>
+                </div>
+                <div class="vote-type-select">
+                    <label>Abstimmungsart:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="vote-type" value="yes-no" checked>
+                            Ja / Nein / Enthaltung
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="vote-type" value="custom">
+                            Benutzerdefinierte Optionen
+                        </label>
+                    </div>
+                </div>
+                <div id="custom-options" class="hidden">
+                    <div class="form-group">
+                        <label>Optionen (eine pro Zeile)</label>
+                        <textarea id="custom-options-input" rows="3" placeholder="Option A&#10;Option B&#10;Option C"></textarea>
+                    </div>
+                </div>
+                <button id="start-vote-btn" class="btn btn-primary">Abstimmung starten</button>
+            </div>
+
+            <!-- Laufende Abstimmung -->
+            <div id="active-vote" class="card hidden">
+                <div class="vote-header">
+                    <h3 id="active-vote-topic"></h3>
+                    <p id="active-vote-description" class="vote-description"></p>
+                </div>
+                <div class="vote-progress">
+                    <span id="votes-cast">0</span> von <span id="votes-total">0</span> Stimmen abgegeben
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="vote-progress-bar"></div>
+                    </div>
+                </div>
+                <div id="vote-buttons" class="vote-buttons"></div>
+                <div class="vote-actions">
+                    <button id="close-vote-btn" class="btn btn-primary">Abstimmung schließen</button>
+                    <button id="cancel-vote-btn" class="btn btn-secondary">Abbrechen</button>
+                </div>
+            </div>
+
+            <!-- Ergebnis -->
+            <div id="vote-result" class="card hidden">
+                <h3>Ergebnis</h3>
+                <h4 id="result-topic"></h4>
+                <div id="result-bars"></div>
+                <div id="result-summary" class="result-summary"></div>
+                <button id="next-vote-btn" class="btn btn-primary">Nächste Abstimmung</button>
+            </div>
+
+            <!-- Abstimmungshistorie -->
+            <div id="history-section" class="card">
+                <h3>Bisherige Abstimmungen</h3>
+                <div id="history-list" class="history-list">
+                    <p class="empty-state">Noch keine Abstimmungen durchgeführt.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Vereinsabstimmung &mdash; Einfaches Abstimmungstool für Vereinssitzungen</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
