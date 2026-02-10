@@ -434,8 +434,17 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         <div class="state-title">Versammlung beendet</div>
         <div class="state-sub">Vielen Dank für Ihre Teilnahme!</div>
     </div>
+    <div id="v-reconnecting" class="screen" style="display:none">
+        <div class="spinner"></div>
+        <div class="state-title" style="margin-top:.75rem">Verbindung wird wiederhergestellt...</div>
+        <div class="state-sub" id="v-reconn-status">Versuch 1 von 5</div>
+        <div class="state-sub" style="font-size:.85rem;color:#999;margin-top:.5rem">Bitte warten Sie einen Moment.<br>Falls das WLAN unterbrochen wurde, stellen Sie die Verbindung wieder her.</div>
+    </div>
     <div id="v-error" class="screen" style="display:none">
-        <div class="error-box" id="v-err-msg">Verbindung fehlgeschlagen.</div>
+        <div style="font-size:2rem;margin-bottom:.5rem">&#9888;&#65039;</div>
+        <div class="state-title">Verbindung konnte nicht wiederhergestellt werden.</div>
+        <button class="btn btn-primary" id="btn-reconn-retry" style="margin-top:1rem;font-size:1.1rem;padding:.9rem 2rem">Erneut verbinden</button>
+        <div class="state-sub" style="margin-top:1rem;font-size:.85rem;color:#999">Oder scannen Sie den QR-Code auf dem Beamer erneut.</div>
     </div>
     <!-- Stimmkarten-specific screens -->
     <div id="v-sk-waiting" class="screen" style="display:none">
@@ -506,6 +515,11 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         var sessionMode = "open"; // "open" or "stimmkarten"
         var tokenCodes = {}; // { code: { used: false, votedInRounds: [] } }
         var generatedCodes = []; // array of code strings
+
+        // Reconnect tracking
+        var disconnectedPeers = new Map(); // deviceId -> { disconnectedAt: timestamp }
+        var deviceIdToPeer = new Map(); // deviceId -> latest conn.peer (for reconnect detection)
+        var connLastSeen = new Map(); // conn.peer -> timestamp
 
         var $ = function(id){ return document.getElementById(id); };
         var el = {
@@ -734,17 +748,38 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         function setupConnection(conn){
             conn.on("open", function(){
                 connections.set(conn.peer, conn);
+                connLastSeen.set(conn.peer, Date.now());
                 updateConnectedCount();
-                // Send current state immediately on connect, include mode
                 sendStateToConn(conn);
             });
 
             conn.on("data", function(data){
+                connLastSeen.set(conn.peer, Date.now());
+
+                // Heartbeat
+                if(data.type === "ping"){
+                    try{ conn.send({ type:"pong" }); }catch(e){}
+                    return;
+                }
+
                 // Voter registers with persistent device ID + fingerprint
                 if(data.type === "register"){
-                    if(data.deviceId) connDeviceMap.set(conn.peer, data.deviceId);
+                    var devId = data.deviceId;
+                    if(devId){
+                        connDeviceMap.set(conn.peer, devId);
+                        // Check if this is a reconnecting device
+                        var oldPeer = deviceIdToPeer.get(devId);
+                        if(oldPeer && oldPeer !== conn.peer){
+                            // Remove old stale connection entry
+                            connections.delete(oldPeer);
+                            connLastSeen.delete(oldPeer);
+                        }
+                        deviceIdToPeer.set(devId, conn.peer);
+                        // Remove from disconnected list
+                        disconnectedPeers.delete(devId);
+                    }
                     if(data.fingerprintId) connDeviceMap.set(conn.peer + ":fp", data.fingerprintId);
-                    // Re-send state with device-aware already-voted check
+                    updateConnectedCount();
                     sendStateToConn(conn);
                 }
                 // --- STIMMKARTEN: Token validation ---
@@ -786,7 +821,6 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 if(data.type === "cast-vote" && currentVote && sessionMode === "open"){
                     var lsId = data.deviceId || connDeviceMap.get(conn.peer) || conn.peer;
                     var fpId = data.fingerprintId || connDeviceMap.get(conn.peer + ":fp") || null;
-                    // Check BOTH: if either is already known, reject
                     if(votedDevices.has(lsId) || (fpId && votedDevices.has("fp:" + fpId))) {
                         conn.send({ type:"already-voted" });
                         return;
@@ -798,16 +832,32 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     currentVote.totalCast++;
                     conn.send({ type:"vote-confirmed" });
                     updateLiveBars();
-                    // Auto-close if all voted
                     if(currentVote.totalCast >= voterCount) closeVote();
                 }
             });
 
             conn.on("close", function(){
                 connections.delete(conn.peer);
+                connLastSeen.delete(conn.peer);
+                // Track as disconnected (may reconnect)
+                var devId = connDeviceMap.get(conn.peer);
+                if(devId){
+                    disconnectedPeers.set(devId, { disconnectedAt: Date.now() });
+                }
                 updateConnectedCount();
             });
         }
+
+        // Periodic cleanup: remove peers disconnected for more than 60s
+        setInterval(function(){
+            var now = Date.now();
+            disconnectedPeers.forEach(function(info, devId){
+                if(now - info.disconnectedAt > 60000){
+                    disconnectedPeers.delete(devId);
+                    updateConnectedCount();
+                }
+            });
+        }, 15000);
 
         function sendStateToConn(conn){
             if(currentVote){
@@ -825,15 +875,21 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         }
 
         function updateConnectedCount(){
+            var reconnCount = disconnectedPeers.size;
             el.lblConnected.textContent = connections.size;
+            var label;
             if(sessionMode === "stimmkarten"){
-                el.lblConnectedLabel.textContent = "Stimmkarten-Geräte verbunden";
+                label = "Stimmkarten-Geräte verbunden";
                 el.skDeviceInfo.classList.remove("hidden");
                 el.lblSkDevices.textContent = connections.size;
             } else {
-                el.lblConnectedLabel.textContent = "Teilnehmer verbunden";
+                label = "Teilnehmer verbunden";
                 el.skDeviceInfo.classList.add("hidden");
             }
+            if(reconnCount > 0){
+                label += " · <span style=\"color:#F59E0B\">" + reconnCount + " verbinden sich erneut</span>";
+            }
+            el.lblConnectedLabel.innerHTML = label;
         }
 
         function broadcast(msg){
@@ -1088,6 +1144,9 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             history = [];
             tokenCodes = {};
             generatedCodes = [];
+            disconnectedPeers.clear();
+            deviceIdToPeer.clear();
+            connLastSeen.clear();
             // Disable beforeunload before redirect
             versammlungAktiv = false;
             window.location.href = dankeUrl;
@@ -1464,7 +1523,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         var hasVoted = false;
         var voterMode = "open"; // will be set by host
         var skCurrentCode = null;
-        var screens = ["v-connecting","v-waiting","v-voting","v-confirmed","v-result","v-ended","v-error","v-sk-waiting","v-sk-code","v-sk-vote","v-sk-confirmed"];
+        var screens = ["v-connecting","v-waiting","v-voting","v-confirmed","v-result","v-ended","v-reconnecting","v-error","v-sk-waiting","v-sk-code","v-sk-vote","v-sk-confirmed"];
 
         function showScreen(id){
             screens.forEach(function(s){ document.getElementById(s).style.display = s===id ? "flex" : "none"; });
@@ -1479,16 +1538,18 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             startVoterConnection();
         });
 
-        function startVoterConnection(){
-        peer.on("open", function(){
-            conn = peer.connect(presenterPeerId, { reliable:true });
+        // ---- Reconnect state ----
+        var sessionEnded = false;
+        var isReconnecting = false;
+        var reconnAttempt = 0;
+        var reconnMaxAttempts = 5;
+        var reconnDelays = [0, 2000, 5000, 10000, 20000];
+        var reconnTimer = null;
+        var heartbeatInterval = null;
 
-            conn.on("open", function(){
-                // Register with both fingerprint and localStorage ID
-                conn.send({ type:"register", deviceId:lsDeviceId, fingerprintId:fingerprintId });
-            });
-
-            conn.on("data", function(data){
+        function setupDataHandler(c){
+            c.on("data", function(data){
+                if(data.type === "pong") return; // heartbeat response, ignore
                 if(data.type === "waiting"){
                     voterMode = data.mode || "open";
                     showScreen(voterMode === "stimmkarten" ? "v-sk-waiting" : "v-waiting");
@@ -1501,7 +1562,6 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                         skCurrentCode = null;
                         showSkCodeEntry(data);
                     } else {
-                        // Open mode logic
                         if(data.voteRoundId && hasVotedInRound(data.voteRoundId)){
                             hasVoted = true;
                             showScreen("v-confirmed");
@@ -1520,7 +1580,6 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     markVoted(currentRoundId);
                     showScreen("v-confirmed");
                 }
-                // --- Stimmkarten responses ---
                 if(data.type === "sk-result"){
                     handleSkValidation(data);
                 }
@@ -1530,7 +1589,6 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 if(data.type === "timer-update"){
                     voterSecondsLeft = data.seconds;
                     updateVoterTimer();
-                    // Also update stimmkarten timer if visible
                     updateSkTimer();
                 }
                 if(data.type === "vote-closed"){
@@ -1549,31 +1607,163 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     showScreen(voterMode === "stimmkarten" ? "v-sk-waiting" : "v-waiting");
                 }
                 if(data.type === "redirect" && data.url){
+                    sessionEnded = true;
                     stopVoterTimer();
+                    stopHeartbeat();
                     if(peer) peer.destroy();
                     window.location.href = data.url;
                     return;
                 }
                 if(data.type === "session-ended"){
+                    sessionEnded = true;
                     stopVoterTimer();
+                    stopHeartbeat();
                     showScreen("v-ended");
                     if(peer) peer.destroy();
                 }
             });
+        }
+
+        function startHeartbeat(){
+            stopHeartbeat();
+            heartbeatInterval = setInterval(function(){
+                if(conn && conn.open){
+                    try{ conn.send({ type:"ping" }); }catch(e){}
+                }
+            }, 15000);
+        }
+        function stopHeartbeat(){
+            if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
+        }
+
+        function onConnectionEstablished(){
+            isReconnecting = false;
+            reconnAttempt = 0;
+            if(reconnTimer){ clearTimeout(reconnTimer); reconnTimer = null; }
+            conn.send({ type:"register", deviceId:lsDeviceId, fingerprintId:fingerprintId });
+            startHeartbeat();
+        }
+
+        function onConnectionLost(){
+            stopHeartbeat();
+            if(sessionEnded) return;
+            conn = null;
+            startReconnect();
+        }
+
+        function startReconnect(){
+            if(sessionEnded || isReconnecting) return;
+            isReconnecting = true;
+            reconnAttempt = 0;
+            attemptReconnect();
+        }
+
+        function attemptReconnect(){
+            if(sessionEnded) return;
+            if(reconnAttempt >= reconnMaxAttempts){
+                // All attempts exhausted
+                isReconnecting = false;
+                showScreen("v-error");
+                return;
+            }
+            var delay = reconnDelays[reconnAttempt] || 20000;
+            reconnAttempt++;
+            document.getElementById("v-reconn-status").textContent = "Versuch " + reconnAttempt + " von " + reconnMaxAttempts;
+            showScreen("v-reconnecting");
+
+            reconnTimer = setTimeout(function(){
+                if(sessionEnded) return;
+                // Check if peer is still usable
+                if(!peer || peer.destroyed){
+                    peer = new Peer();
+                    peer.on("open", function(){
+                        doConnect();
+                    });
+                    peer.on("error", function(){
+                        attemptReconnect();
+                    });
+                } else if(peer.disconnected){
+                    try{
+                        peer.reconnect();
+                        // Wait a bit for reconnect
+                        setTimeout(function(){
+                            if(peer.open) doConnect();
+                            else attemptReconnect();
+                        }, 2000);
+                    }catch(e){
+                        peer = new Peer();
+                        peer.on("open", function(){ doConnect(); });
+                        peer.on("error", function(){ attemptReconnect(); });
+                    }
+                } else {
+                    doConnect();
+                }
+            }, delay);
+        }
+
+        function doConnect(){
+            if(sessionEnded) return;
+            try{
+                conn = peer.connect(presenterPeerId, { reliable:true });
+                conn.on("open", function(){
+                    onConnectionEstablished();
+                });
+                setupDataHandler(conn);
+                conn.on("close", function(){
+                    onConnectionLost();
+                });
+                conn.on("error", function(){
+                    // Don't trigger reconnect from error if close will also fire
+                    if(!isReconnecting) onConnectionLost();
+                });
+                // Timeout: if this connection doesn't open in 8 seconds, try next
+                setTimeout(function(){
+                    if(conn && !conn.open && isReconnecting){
+                        try{ conn.close(); }catch(e){}
+                        attemptReconnect();
+                    }
+                }, 8000);
+            }catch(e){
+                attemptReconnect();
+            }
+        }
+
+        // Manual retry button
+        document.getElementById("btn-reconn-retry").addEventListener("click", function(){
+            startReconnect();
+        });
+
+        // Visibility change: check connection when tab becomes visible
+        document.addEventListener("visibilitychange", function(){
+            if(document.visibilityState === "visible" && !sessionEnded){
+                if(!conn || !conn.open){
+                    if(!isReconnecting) startReconnect();
+                }
+            }
+        });
+
+        function startVoterConnection(){
+        peer.on("open", function(){
+            conn = peer.connect(presenterPeerId, { reliable:true });
+
+            conn.on("open", function(){
+                onConnectionEstablished();
+            });
+
+            setupDataHandler(conn);
 
             conn.on("close", function(){
-                showScreen("v-ended");
+                onConnectionLost();
             });
 
             conn.on("error", function(){
-                document.getElementById("v-err-msg").textContent = "Verbindung zum Versammlungsleiter verloren.";
-                showScreen("v-error");
+                if(!isReconnecting) onConnectionLost();
             });
         });
 
         peer.on("error", function(err){
-            document.getElementById("v-err-msg").textContent = "Verbindungsfehler: " + err.type;
-            showScreen("v-error");
+            if(sessionEnded) return;
+            if(!isReconnecting) startReconnect();
         });
         } // end startVoterConnection
 
