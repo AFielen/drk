@@ -178,7 +178,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 <div id="view-presenter">
 <main>
     <!-- Info -->
-    <div class="info-box">
+    <div id="p-welcome-info" class="info-box">
         <h3>Willkommen beim digitalen Abstimmungssystem</h3>
         <p>Mit diesem Tool koennen Sie Abstimmungen in Ihrer Versammlung schnell und einfach digital durchfuehren. So funktioniert es:</p>
         <ul>
@@ -389,6 +389,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
         var $ = function(id){ return document.getElementById(id); };
         var el = {
+            welcomeInfo: $("p-welcome-info"),
             setup: $("p-setup"), session: $("p-session"), connecting: $("p-connecting"),
             inpTitle: $("inp-title"), inpVoters: $("inp-voters"),
             btnStartSession: $("btn-start-session"), btnEndSession: $("btn-end-session"),
@@ -427,6 +428,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             history = [];
             el.lblTitle.textContent = sessionTitle;
             el.lblVoters.textContent = voterCount + " Stimmberechtigte";
+            el.welcomeInfo.classList.add("hidden");
             el.setup.classList.add("hidden");
             el.session.classList.remove("hidden");
             el.connecting.classList.remove("hidden");
@@ -535,6 +537,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             currentVote = null;
             history = [];
             el.session.classList.add("hidden");
+            el.welcomeInfo.classList.remove("hidden");
             el.setup.classList.remove("hidden");
             el.inpTitle.value = "";
             el.inpVoters.value = "10";
