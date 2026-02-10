@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vielen Dank – DRK Vereinsabstimmung</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --drk-red: #E30613;
+            --drk-red-dark: #B8050F;
+            --drk-red-light: #FDE8E8;
+            --drk-red-glow: rgba(227, 6, 19, 0.08);
+            --dark: #1A1A1A;
+            --dark-mid: #333333;
+            --gray: #666666;
+            --gray-light: #999999;
+            --bg: #FAFAFA;
+            --white: #FFFFFF;
+            --border: #E8E8E8;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+            --radius: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--drk-red) 0%, var(--drk-red-dark) 100%);
+            color: var(--white);
+            padding: 60px 24px 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.08) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .hero-icon {
+            width: 72px;
+            height: 72px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 32px;
+            backdrop-filter: blur(8px);
+            animation: pulse-in 0.6s ease-out;
+        }
+
+        @keyframes pulse-in {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .hero h1 {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: -0.01em;
+            animation: fade-up 0.5s ease-out 0.1s both;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            font-weight: 300;
+            opacity: 0.9;
+            max-width: 480px;
+            margin: 0 auto;
+            animation: fade-up 0.5s ease-out 0.2s both;
+        }
+
+        @keyframes fade-up {
+            0% { transform: translateY(12px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 32px;
+            animation: fade-up 0.5s ease-out 0.3s both;
+        }
+
+        .hero-stat { text-align: center; }
+
+        .hero-stat-value {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            display: block;
+        }
+
+        .hero-stat-label {
+            font-size: 0.85rem;
+            font-weight: 300;
+            opacity: 0.75;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .main {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .donation-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 40px 36px;
+            margin-top: -40px;
+            position: relative;
+            z-index: 2;
+            animation: fade-up 0.5s ease-out 0.4s both;
+        }
+
+        .donation-card h2 {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .donation-card > p {
+            color: var(--gray);
+            font-size: 0.95rem;
+            margin-bottom: 28px;
+            line-height: 1.7;
+        }
+
+        .donation-amounts {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .donation-btn {
+            flex: 1;
+            padding: 16px 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--white);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: block;
+        }
+
+        .donation-btn:hover {
+            border-color: var(--drk-red);
+            background: var(--drk-red-glow);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .donation-btn:active { transform: translateY(0); }
+
+        .donation-btn .amount {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: block;
+        }
+
+        .donation-btn:hover .amount { color: var(--drk-red); }
+
+        .donation-btn .label {
+            font-size: 0.8rem;
+            color: var(--gray-light);
+            margin-top: 4px;
+            display: block;
+        }
+
+        .donation-note {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--gray-light);
+            margin-top: 16px;
+            line-height: 1.5;
+        }
+
+        .donation-note a {
+            color: var(--gray);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 48px 0;
+        }
+
+        .whatelse {
+            padding-bottom: 60px;
+            animation: fade-up 0.5s ease-out 0.5s both;
+        }
+
+        .whatelse h2 {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+
+        .whatelse > p {
+            color: var(--gray);
+            font-size: 0.95rem;
+            margin-bottom: 28px;
+        }
+
+        .offer-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .offer-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--white);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .offer-card:hover {
+            border-color: var(--drk-red);
+            box-shadow: var(--shadow-sm);
+            transform: translateX(4px);
+        }
+
+        .offer-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .offer-icon.red { background: var(--drk-red-light); }
+        .offer-icon.gray { background: #F0F0F0; }
+        .offer-icon.blue { background: #E8F0FE; }
+
+        .offer-text h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .offer-text p {
+            font-size: 0.85rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        .offer-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+            position: relative;
+            top: -1px;
+        }
+
+        .offer-badge.soon { background: #FFF3E0; color: #E65100; }
+
+        .footer {
+            text-align: center;
+            padding: 32px 24px;
+            border-top: 1px solid var(--border);
+            background: var(--white);
+        }
+
+        .footer-brand {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--drk-red);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 6px;
+        }
+
+        .footer p {
+            font-size: 0.8rem;
+            color: var(--gray-light);
+        }
+
+        .footer a {
+            color: var(--gray);
+            text-decoration: none;
+        }
+
+        .footer a:hover { color: var(--drk-red); }
+
+        @media (max-width: 480px) {
+            .hero { padding: 48px 20px 70px; }
+            .hero h1 { font-size: 1.6rem; }
+            .hero-stats { gap: 24px; }
+            .hero-stat-value { font-size: 1.4rem; }
+            .donation-card { padding: 28px 24px; margin-top: -36px; }
+            .donation-amounts { gap: 8px; }
+            .donation-btn .amount { font-size: 1.3rem; }
+            .donation-btn { padding: 14px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-icon">&#10003;</div>
+            <h1>Vielen Dank für Ihre Teilnahme!</h1>
+            <p>Die Versammlung wurde erfolgreich abgeschlossen. Alle Abstimmungsergebnisse wurden protokolliert.</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="stat-votes">&ndash;</span>
+                    <span class="hero-stat-label">Abstimmungen</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="stat-participants">&ndash;</span>
+                    <span class="hero-stat-label">Teilnehmer</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="stat-total">&ndash;</span>
+                    <span class="hero-stat-label">Stimmen gesamt</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="main">
+
+        <div class="donation-card">
+            <h2>Weiterentwicklung unterstützen</h2>
+            <p>Diese Anwendung ist Open Source und kostenfrei für alle DRK-Gliederungen. Wenn Ihnen das Tool geholfen hat und Sie die Weiterentwicklung unterstützen möchten, freuen wir uns über einen kleinen Beitrag.</p>
+
+            <!-- TODO: DEINE_PAYPAL_ID durch echte PayPal-Business-ID ersetzen -->
+            <div class="donation-amounts">
+                <a href="https://www.paypal.com/donate/?business=DEINE_PAYPAL_ID&amount=2&currency_code=EUR&item_name=DRK+Vereinsabstimmung" target="_blank" class="donation-btn">
+                    <span class="amount">2 &euro;</span>
+                    <span class="label">Danke!</span>
+                </a>
+                <a href="https://www.paypal.com/donate/?business=DEINE_PAYPAL_ID&amount=5&currency_code=EUR&item_name=DRK+Vereinsabstimmung" target="_blank" class="donation-btn">
+                    <span class="amount">5 &euro;</span>
+                    <span class="label">Klasse!</span>
+                </a>
+                <a href="https://www.paypal.com/donate/?business=DEINE_PAYPAL_ID&amount=10&currency_code=EUR&item_name=DRK+Vereinsabstimmung" target="_blank" class="donation-btn">
+                    <span class="amount">10 &euro;</span>
+                    <span class="label">Großartig!</span>
+                </a>
+            </div>
+
+            <p class="donation-note">
+                Spenden fließen in Hosting, Weiterentwicklung und Barrierefreiheit.<br>
+                <a href="https://github.com/afielen/drk">Quellcode auf GitHub ansehen</a>
+            </p>
+        </div>
+
+        <div class="divider"></div>
+
+        <section class="whatelse">
+            <h2>Was wir sonst noch entwickeln</h2>
+            <p>Datensparsame, Open-Source-Werkzeuge für die Vereins- und Verbandsarbeit.</p>
+
+            <div class="offer-cards">
+                <a href="#" class="offer-card">
+                    <div class="offer-icon red">&#128203;</div>
+                    <div class="offer-text">
+                        <h3>Digitale Gremienarbeit <span class="offer-badge soon">In Entwicklung</span></h3>
+                        <p>Sitzungsmanagement, Beschlussdokumentation und Protokollführung – serverlos, datenschutzkonform, speziell für DRK-Gliederungen.</p>
+                    </div>
+                </a>
+                <a href="#" class="offer-card">
+                    <div class="offer-icon blue">&#128274;</div>
+                    <div class="offer-text">
+                        <h3>Datenschutz-arme Werkzeuge <span class="offer-badge soon">In Entwicklung</span></h3>
+                        <p>Umfragen, Terminabstimmungen und Feedback-Tools, die ohne Cloud-Anbindung und ohne Auftragsverarbeitung funktionieren.</p>
+                    </div>
+                </a>
+                <a href="#" class="offer-card">
+                    <div class="offer-icon gray">&#128640;</div>
+                    <div class="offer-text">
+                        <h3>Beratung und Integration</h3>
+                        <p>Unterstützung bei der Einführung digitaler Werkzeuge in Ihrem Kreis- oder Landesverband. Schulungen, Anpassungen, individuelle Lösungen.</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-brand">Deutsches Rotes Kreuz</div>
+        <p>
+            Kreisverband StädteRegion Aachen e.V.<br>
+            <a href="mailto:support@drk-aachen.de">support@drk-aachen.de</a> ·
+            <a href="https://www.drk-aachen.de">www.drk-aachen.de</a>
+        </p>
+    </footer>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const votes = params.get('votes');
+        const participants = params.get('participants');
+        const total = params.get('total');
+        if (votes) document.getElementById('stat-votes').textContent = votes;
+        if (participants) document.getElementById('stat-participants').textContent = participants;
+        if (total) document.getElementById('stat-total').textContent = total;
+    </script>
+
+</body>
+</html>

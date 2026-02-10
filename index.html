@@ -797,6 +797,14 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         el.btnEndSession.addEventListener("click", function(){
             if(!confirm("Versammlung wirklich beenden?")) return;
             stopTimer();
+            // Collect stats for danke page
+            var totalStimmen = 0;
+            history.forEach(function(h){ totalStimmen += h.totalCast; });
+            if(currentVote) totalStimmen += currentVote.totalCast;
+            var anzahlAbstimmungen = history.length + (currentVote ? 1 : 0);
+            var dankeUrl = "danke.html?votes=" + anzahlAbstimmungen + "&participants=" + voterCount + "&total=" + totalStimmen;
+            // Redirect all voters to danke page
+            broadcast({ type:"redirect", url:dankeUrl });
             broadcast({ type:"session-ended" });
             if(peer) peer.destroy();
             peer = null;
@@ -805,13 +813,8 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             history = [];
             tokenCodes = {};
             generatedCodes = [];
-            el.session.classList.add("hidden");
-            el.welcomeInfo.classList.remove("hidden");
-            el.setup.classList.remove("hidden");
-            el.inpTitle.value = "";
-            el.inpVoters.value = "10";
-            el.tokenPreview.classList.add("hidden");
-            el.tokenList.innerHTML = "";
+            // Redirect presenter to danke page
+            window.location.href = dankeUrl;
         });
 
         // ---- Start vote ----
@@ -1206,6 +1209,12 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     clearVoted(currentRoundId);
                     currentRoundId = null;
                     showScreen(voterMode === "stimmkarten" ? "v-sk-waiting" : "v-waiting");
+                }
+                if(data.type === "redirect" && data.url){
+                    stopVoterTimer();
+                    if(peer) peer.destroy();
+                    window.location.href = data.url;
+                    return;
                 }
                 if(data.type === "session-ended"){
                     stopVoterTimer();
