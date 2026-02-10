@@ -222,6 +222,23 @@
             text-underline-offset: 2px;
         }
 
+        .restart-link {
+            display: block;
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--drk-red);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .restart-link:hover {
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            color: var(--drk-red-dark);
+        }
+
         .divider {
             height: 1px;
             background: var(--border);
@@ -405,6 +422,7 @@
                 Spenden fließen in Hosting, Weiterentwicklung und Barrierefreiheit.<br>
                 <a href="https://github.com/afielen/drk">Quellcode auf GitHub ansehen</a>
             </p>
+            <a href="index.html" class="restart-link">Neue Versammlung starten &rarr;</a>
         </div>
 
         <div class="divider"></div>
@@ -415,24 +433,24 @@
 
             <div class="offer-cards">
                 <a href="#" class="offer-card">
-                    <div class="offer-icon red">&#128203;</div>
+                    <div class="offer-icon blue">&#129302;</div>
                     <div class="offer-text">
-                        <h3>Digitale Gremienarbeit <span class="offer-badge soon">In Entwicklung</span></h3>
-                        <p>Sitzungsmanagement, Beschlussdokumentation und Protokollführung – serverlos, datenschutzkonform, speziell für DRK-Gliederungen.</p>
+                        <h3>HenryGPT <span class="offer-badge soon">In Entwicklung</span></h3>
+                        <p>Intelligenter KI-Assistent speziell f&uuml;r das DRK &ndash; DSGVO-konform in eigener Umgebung. Nutzt RAG und Multi-Agenten-Architektur &uuml;ber Claude- und OpenAI-APIs, ohne eigene Modellentwicklung. F&uuml;r HR, Dokumentenmanagement und Fachberatung.</p>
                     </div>
                 </a>
                 <a href="#" class="offer-card">
-                    <div class="offer-icon blue">&#128274;</div>
+                    <div class="offer-icon red">&#128203;</div>
                     <div class="offer-text">
-                        <h3>Datenschutz-arme Werkzeuge <span class="offer-badge soon">In Entwicklung</span></h3>
-                        <p>Umfragen, Terminabstimmungen und Feedback-Tools, die ohne Cloud-Anbindung und ohne Auftragsverarbeitung funktionieren.</p>
+                        <h3>Digitale Gremienarbeit <span class="offer-badge soon">In Entwicklung</span></h3>
+                        <p>Sitzungsmanagement, Beschlussdokumentation und Protokollf&uuml;hrung &ndash; serverlos, datenschutzkonform, speziell f&uuml;r DRK-Gliederungen.</p>
                     </div>
                 </a>
                 <a href="#" class="offer-card">
                     <div class="offer-icon gray">&#128640;</div>
                     <div class="offer-text">
                         <h3>Beratung und Integration</h3>
-                        <p>Unterstützung bei der Einführung digitaler Werkzeuge in Ihrem Kreis- oder Landesverband. Schulungen, Anpassungen, individuelle Lösungen.</p>
+                        <p>Unterst&uuml;tzung bei der Einf&uuml;hrung digitaler Werkzeuge in Ihrem Kreis- oder Landesverband. Schulungen, Anpassungen, individuelle L&ouml;sungen.</p>
                     </div>
                 </a>
             </div>
