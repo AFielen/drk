@@ -183,16 +183,6 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             <label for="inp-voters">Anzahl Stimmberechtigte</label>
             <input type="number" id="inp-voters" min="1" value="10">
         </div>
-        <div class="form-group">
-            <label>Zeitlimit pro Abstimmung</label>
-            <div class="timer-settings">
-                <label class="timer-toggle"><input type="checkbox" id="chk-timer" checked> Zeitlimit aktivieren</label>
-                <div class="timer-inline">
-                    <input type="number" id="inp-timer-min" min="1" max="60" value="5">
-                    <span>Minuten</span>
-                </div>
-            </div>
-        </div>
         <button class="btn btn-primary" id="btn-start-session">Sitzung starten</button>
     </section>
 
@@ -234,7 +224,13 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 </div>
             </div>
             <div class="form-group">
-                <label class="timer-toggle"><input type="checkbox" id="chk-vote-timer" checked> Zeitlimit: <span id="lbl-timer-dur">5 Minuten</span></label>
+                <div class="timer-settings">
+                    <label class="timer-toggle"><input type="checkbox" id="chk-vote-timer" checked> Zeitlimit</label>
+                    <div class="timer-inline">
+                        <input type="number" id="inp-vote-timer-min" min="1" max="60" value="5">
+                        <span>Minuten</span>
+                    </div>
+                </div>
             </div>
             <button class="btn btn-primary" id="btn-start-vote">Abstimmung starten</button>
         </div>
@@ -356,8 +352,6 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         var votedDevices = new Set();
         var connDeviceMap = new Map();
         var history = [];
-        var timerEnabled = true;
-        var timerMinutes = 5;
         var timerSecondsLeft = 0;
         var timerInterval = null;
 
@@ -380,8 +374,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             lblResultTopic: $("lbl-result-topic"), resultBars: $("result-bars"),
             resultNotVoted: $("result-not-voted"),
             resultSummary: $("result-summary"), historyList: $("history-list"),
-            chkTimer: $("chk-timer"), inpTimerMin: $("inp-timer-min"),
-            chkVoteTimer: $("chk-vote-timer"), lblTimerDur: $("lbl-timer-dur"),
+            chkVoteTimer: $("chk-vote-timer"), inpVoteTimerMin: $("inp-vote-timer-min"),
             timerArea: $("p-timer-area"), lblTimer: $("lbl-timer"),
         };
 
@@ -399,15 +392,9 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             if(!sessionTitle){ alert("Bitte Sitzungstitel eingeben."); return; }
             if(!voterCount || voterCount < 1){ alert("Bitte gültige Anzahl eingeben."); return; }
 
-            timerEnabled = el.chkTimer.checked;
-            timerMinutes = parseInt(el.inpTimerMin.value, 10) || 5;
-            if(timerMinutes < 1) timerMinutes = 1;
-
             history = [];
             el.lblTitle.textContent = sessionTitle;
             el.lblVoters.textContent = voterCount + " Stimmberechtigte";
-            el.chkVoteTimer.checked = timerEnabled;
-            el.lblTimerDur.textContent = timerMinutes + " Minuten";
             el.setup.classList.add("hidden");
             el.session.classList.remove("hidden");
             el.connecting.classList.remove("hidden");
@@ -540,7 +527,9 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             options.forEach(function(o){ votes[o] = 0; });
             var roundId = "round-" + Date.now() + "-" + randomCode(4);
             var voteTimerOn = el.chkVoteTimer.checked;
-            var voteTimerSec = voteTimerOn ? timerMinutes * 60 : 0;
+            var voteTimerMin = parseInt(el.inpVoteTimerMin.value, 10) || 5;
+            if(voteTimerMin < 1) voteTimerMin = 1;
+            var voteTimerSec = voteTimerOn ? voteTimerMin * 60 : 0;
             currentVote = { topic:topic, description:desc, type:vtype, options:options, votes:votes, totalCast:0, roundId:roundId, timerEnabled:voteTimerOn, timerSeconds:voteTimerSec };
             votedDevices = new Set();
 
@@ -604,7 +593,6 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             el.inpCustom.value = "";
             document.querySelector('input[name="vtype"][value="yes-no"]').checked = true;
             el.customOpts.classList.add("hidden");
-            el.chkVoteTimer.checked = timerEnabled;
             el.resultNotVoted.classList.add("hidden");
             currentVote = null;
         }
