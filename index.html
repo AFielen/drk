@@ -227,15 +227,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 <main>
     <!-- Info -->
     <div id="p-welcome-info" class="info-box">
-        <h3>Willkommen beim digitalen Abstimmungssystem</h3>
-        <p>Mit diesem Tool koennen Sie Abstimmungen in Ihrer Versammlung schnell und einfach digital durchfuehren. So funktioniert es:</p>
-        <ul>
-            <li>Richten Sie unten Ihre Versammlung ein und starten Sie diese.</li>
-            <li>Fuer jede Abstimmung wird ein <strong>QR-Code</strong> auf dem Bildschirm angezeigt.</li>
-            <li>Die Mitglieder scannen den QR-Code mit dem Smartphone und stimmen direkt ab.</li>
-            <li>Das Ergebnis erscheint in <strong>Echtzeit</strong> auf dem Bildschirm.</li>
-        </ul>
-        <p style="margin-top:.5rem">Alle Stimmen werden <strong>vollstaendig anonym</strong> abgegeben. Es werden keine persoenlichen Daten gespeichert und keine Stimme kann einer Person zugeordnet werden. Die Kommunikation laeuft direkt zwischen den Geraeten -- ohne Server, ohne Datenbank.</p>
+        <div id="welcome-info-content"></div>
     </div>
 
     <!-- Setup -->
@@ -325,16 +317,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
         <!-- Vote info box -->
         <div id="p-vote-info" class="info-box hidden">
-            <h3>So funktioniert die Abstimmung</h3>
-            <ul>
-                <li>Geben Sie oben das <strong>Thema</strong> und optional eine Beschreibung ein.</li>
-                <li>Waehlen Sie die <strong>Abstimmungsart</strong>: Ja/Nein/Enthaltung oder eigene Optionen.</li>
-                <li>Optional: Aktivieren Sie ein <strong>Zeitlimit</strong> -- nach Ablauf wird die Abstimmung automatisch geschlossen.</li>
-                <li>Nach dem Start erscheint ein <strong>QR-Code</strong> auf dem Bildschirm. Die Mitglieder scannen diesen mit dem Smartphone und geben ihre Stimme ab.</li>
-                <li>Die Ergebnisse werden <strong>live</strong> auf dem Bildschirm aktualisiert.</li>
-                <li>Sie koennen die Abstimmung jederzeit manuell schliessen oder warten, bis alle abgestimmt haben bzw. das Zeitlimit ablaeuft.</li>
-            </ul>
-            <p style="margin-top:.5rem">Jede Stimme ist <strong>anonym</strong> -- es ist nicht erkennbar, wer wie abgestimmt hat. Jedes Geraet kann pro Abstimmungsrunde nur einmal abstimmen.</p>
+            <div id="vote-info-content"></div>
         </div>
 
         <!-- Active vote -->
@@ -529,10 +512,61 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 document.querySelectorAll(".mode-card").forEach(function(c){c.classList.remove("active")});
                 this.closest(".mode-card").classList.add("active");
                 el.kioskTokenSetup.classList.toggle("hidden", sessionMode !== "kiosk");
+                updateInfoBoxes();
             });
         });
 
         // ---- Token generation ----
+        // ---- Info box content per mode ----
+        function updateInfoBoxes(){
+            var wc = $("welcome-info-content");
+            var vc = $("vote-info-content");
+            if(sessionMode === "kiosk"){
+                wc.innerHTML = '<h3>Willkommen beim digitalen Abstimmungssystem</h3>'
+                    + '<p>Mit diesem Tool koennen Sie Abstimmungen in Ihrer Versammlung ueber durchgereichte Geraete (Kiosk-Modus) durchfuehren. So funktioniert es:</p>'
+                    + '<ul>'
+                    + '<li>Richten Sie unten Ihre Versammlung ein und waehlen Sie den <strong>Kiosk-Modus</strong>.</li>'
+                    + '<li>Generieren Sie <strong>Token-Codes</strong> fuer alle Stimmberechtigten und drucken Sie diese aus.</li>'
+                    + '<li>Verteilen Sie die ausgedruckten Codes an die Mitglieder.</li>'
+                    + '<li>Verbinden Sie ein oder mehrere <strong>Abstimmungsgeraete</strong> (Tablets/Smartphones) per QR-Code.</li>'
+                    + '<li>Die Mitglieder geben ihren Code am Geraet ein und stimmen ab -- das Geraet wird danach automatisch fuer die naechste Person zurueckgesetzt.</li>'
+                    + '</ul>'
+                    + '<p style="margin-top:.5rem">Jeder Code kann pro Abstimmungsrunde <strong>nur einmal</strong> verwendet werden. Alle Stimmen bleiben <strong>anonym</strong> -- es ist nicht nachvollziehbar, welcher Code wie abgestimmt hat.</p>';
+                vc.innerHTML = '<h3>So funktioniert die Abstimmung (Kiosk-Modus)</h3>'
+                    + '<ul>'
+                    + '<li>Geben Sie oben das <strong>Thema</strong> und optional eine Beschreibung ein.</li>'
+                    + '<li>Waehlen Sie die <strong>Abstimmungsart</strong>: Ja/Nein/Enthaltung oder eigene Optionen.</li>'
+                    + '<li>Optional: Aktivieren Sie ein <strong>Zeitlimit</strong> -- nach Ablauf wird die Abstimmung automatisch geschlossen.</li>'
+                    + '<li>Nach dem Start erscheint auf den Kiosk-Geraeten die <strong>Code-Eingabe</strong>. Die Mitglieder geben ihren Token-Code ein und stimmen ab.</li>'
+                    + '<li>Der Fortschritt zeigt an, wie viele <strong>Codes eingeloest</strong> wurden.</li>'
+                    + '<li>Sie koennen die Abstimmung jederzeit manuell schliessen oder warten, bis alle abgestimmt haben bzw. das Zeitlimit ablaeuft.</li>'
+                    + '</ul>'
+                    + '<p style="margin-top:.5rem">Jeder Token-Code ist pro Runde <strong>einmalig</strong> verwendbar. In der naechsten Abstimmungsrunde kann derselbe Code erneut genutzt werden.</p>';
+            } else {
+                wc.innerHTML = '<h3>Willkommen beim digitalen Abstimmungssystem</h3>'
+                    + '<p>Mit diesem Tool koennen Sie Abstimmungen in Ihrer Versammlung schnell und einfach digital durchfuehren. So funktioniert es:</p>'
+                    + '<ul>'
+                    + '<li>Richten Sie unten Ihre Versammlung ein und starten Sie diese.</li>'
+                    + '<li>Fuer jede Abstimmung wird ein <strong>QR-Code</strong> auf dem Bildschirm angezeigt.</li>'
+                    + '<li>Die Mitglieder scannen den QR-Code mit dem Smartphone und stimmen direkt ab.</li>'
+                    + '<li>Das Ergebnis erscheint in <strong>Echtzeit</strong> auf dem Bildschirm.</li>'
+                    + '</ul>'
+                    + '<p style="margin-top:.5rem">Alle Stimmen werden <strong>vollstaendig anonym</strong> abgegeben. Es werden keine persoenlichen Daten gespeichert und keine Stimme kann einer Person zugeordnet werden. Die Kommunikation laeuft direkt zwischen den Geraeten -- ohne Server, ohne Datenbank.</p>';
+                vc.innerHTML = '<h3>So funktioniert die Abstimmung</h3>'
+                    + '<ul>'
+                    + '<li>Geben Sie oben das <strong>Thema</strong> und optional eine Beschreibung ein.</li>'
+                    + '<li>Waehlen Sie die <strong>Abstimmungsart</strong>: Ja/Nein/Enthaltung oder eigene Optionen.</li>'
+                    + '<li>Optional: Aktivieren Sie ein <strong>Zeitlimit</strong> -- nach Ablauf wird die Abstimmung automatisch geschlossen.</li>'
+                    + '<li>Nach dem Start erscheint ein <strong>QR-Code</strong> auf dem Bildschirm. Die Mitglieder scannen diesen mit dem Smartphone und geben ihre Stimme ab.</li>'
+                    + '<li>Die Ergebnisse werden <strong>live</strong> auf dem Bildschirm aktualisiert.</li>'
+                    + '<li>Sie koennen die Abstimmung jederzeit manuell schliessen oder warten, bis alle abgestimmt haben bzw. das Zeitlimit ablaeuft.</li>'
+                    + '</ul>'
+                    + '<p style="margin-top:.5rem">Jede Stimme ist <strong>anonym</strong> -- es ist nicht erkennbar, wer wie abgestimmt hat. Jedes Geraet kann pro Abstimmungsrunde nur einmal abstimmen.</p>';
+            }
+        }
+        // Initialize info boxes with default mode
+        updateInfoBoxes();
+
         var TOKEN_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
         function generateToken(){
             var code = "";
