@@ -317,7 +317,8 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         var sessionTitle = "";
         var voterCount = 10;
         var currentVote = null;
-        var votedPeers = new Set();
+        var votedDevices = new Set();
+        var connDeviceMap = new Map();
         var history = [];
 
         var $ = function(id){ return document.getElementById(id); };
@@ -396,25 +397,30 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             conn.on("open", function(){
                 connections.set(conn.peer, conn);
                 updateConnectedCount();
-                // Send current state to new voter
-                if(currentVote){
-                    conn.send({ type:"vote-started", topic:currentVote.topic, description:currentVote.description, voteType:currentVote.type, options:currentVote.options });
-                    if(votedPeers.has(conn.peer)){
-                        conn.send({ type:"already-voted" });
-                    }
-                } else {
-                    conn.send({ type:"waiting" });
-                }
             });
 
             conn.on("data", function(data){
+                // Voter registers with persistent device ID
+                if(data.type === "register" && data.deviceId){
+                    connDeviceMap.set(conn.peer, data.deviceId);
+                    // Send current state after registration
+                    if(currentVote){
+                        conn.send({ type:"vote-started", topic:currentVote.topic, description:currentVote.description, voteType:currentVote.type, options:currentVote.options, voteRoundId:currentVote.roundId });
+                        if(votedDevices.has(data.deviceId)){
+                            conn.send({ type:"already-voted" });
+                        }
+                    } else {
+                        conn.send({ type:"waiting" });
+                    }
+                }
                 if(data.type === "cast-vote" && currentVote){
-                    if(votedPeers.has(conn.peer)) {
+                    var deviceId = data.deviceId || connDeviceMap.get(conn.peer) || conn.peer;
+                    if(votedDevices.has(deviceId)) {
                         conn.send({ type:"already-voted" });
                         return;
                     }
                     if(!currentVote.options.includes(data.option)) return;
-                    votedPeers.add(conn.peer);
+                    votedDevices.add(deviceId);
                     currentVote.votes[data.option]++;
                     currentVote.totalCast++;
                     conn.send({ type:"vote-confirmed" });
@@ -474,10 +480,11 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
             var votes = {};
             options.forEach(function(o){ votes[o] = 0; });
-            currentVote = { topic:topic, description:desc, type:vtype, options:options, votes:votes, totalCast:0 };
-            votedPeers = new Set();
+            var roundId = "round-" + Date.now() + "-" + randomCode(4);
+            currentVote = { topic:topic, description:desc, type:vtype, options:options, votes:votes, totalCast:0, roundId:roundId };
+            votedDevices = new Set();
 
-            broadcast({ type:"vote-started", topic:topic, description:desc, voteType:vtype, options:options });
+            broadcast({ type:"vote-started", topic:topic, description:desc, voteType:vtype, options:options, voteRoundId:roundId });
             showActiveVote();
         });
 
@@ -630,6 +637,26 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
     // ===================== VOTER =====================
     function initVoter(presenterPeerId){
+        // Persistent device ID to prevent double voting after page reload
+        var deviceId = localStorage.getItem("drk-device-id");
+        if(!deviceId){
+            deviceId = "dev-" + randomCode(12);
+            localStorage.setItem("drk-device-id", deviceId);
+        }
+        var currentRoundId = null;
+
+        // Clean up old voted rounds (older than 24h)
+        try {
+            var stored = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
+            var now = Date.now();
+            var cleaned = {};
+            Object.keys(stored).forEach(function(key){
+                var ts = parseInt(key.split("-")[1], 10);
+                if(now - ts < 86400000) cleaned[key] = true;
+            });
+            localStorage.setItem("drk-voted-rounds", JSON.stringify(cleaned));
+        } catch(e){}
+
         var peer = new Peer();
         var conn = null;
         var hasVoted = false;
@@ -643,7 +670,8 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             conn = peer.connect(presenterPeerId, { reliable:true });
 
             conn.on("open", function(){
-                showScreen("v-waiting");
+                // Register with persistent device ID
+                conn.send({ type:"register", deviceId:deviceId });
             });
 
             conn.on("data", function(data){
@@ -651,14 +679,33 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     showScreen("v-waiting");
                 }
                 if(data.type === "vote-started"){
-                    hasVoted = false;
-                    showVoting(data);
+                    currentRoundId = data.voteRoundId;
+                    // Check localStorage if we already voted in this round
+                    var votedRounds = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
+                    if(data.voteRoundId && votedRounds[data.voteRoundId]){
+                        hasVoted = true;
+                        showScreen("v-confirmed");
+                    } else {
+                        hasVoted = false;
+                        showVoting(data);
+                    }
                 }
                 if(data.type === "vote-confirmed"){
+                    // Store that we voted in this round
+                    if(currentRoundId){
+                        var vr = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
+                        vr[currentRoundId] = true;
+                        localStorage.setItem("drk-voted-rounds", JSON.stringify(vr));
+                    }
                     showScreen("v-confirmed");
                 }
                 if(data.type === "already-voted"){
                     hasVoted = true;
+                    if(currentRoundId){
+                        var vr2 = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
+                        vr2[currentRoundId] = true;
+                        localStorage.setItem("drk-voted-rounds", JSON.stringify(vr2));
+                    }
                     showScreen("v-confirmed");
                 }
                 if(data.type === "vote-closed"){
@@ -666,6 +713,12 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 }
                 if(data.type === "vote-cancelled"){
                     hasVoted = false;
+                    if(currentRoundId){
+                        var vr3 = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
+                        delete vr3[currentRoundId];
+                        localStorage.setItem("drk-voted-rounds", JSON.stringify(vr3));
+                    }
+                    currentRoundId = null;
                     showScreen("v-waiting");
                 }
                 if(data.type === "session-ended"){
@@ -704,7 +757,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 btn.addEventListener("click", function(){
                     if(hasVoted) return;
                     hasVoted = true;
-                    conn.send({ type:"cast-vote", option:opt });
+                    conn.send({ type:"cast-vote", option:opt, deviceId:deviceId });
                 });
                 container.appendChild(btn);
             });
