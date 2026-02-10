@@ -475,20 +475,24 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             });
 
             conn.on("data", function(data){
-                // Voter registers with persistent device ID
-                if(data.type === "register" && data.deviceId){
-                    connDeviceMap.set(conn.peer, data.deviceId);
+                // Voter registers with persistent device ID + fingerprint
+                if(data.type === "register"){
+                    if(data.deviceId) connDeviceMap.set(conn.peer, data.deviceId);
+                    if(data.fingerprintId) connDeviceMap.set(conn.peer + ":fp", data.fingerprintId);
                     // Re-send state with device-aware already-voted check
                     sendStateToConn(conn);
                 }
                 if(data.type === "cast-vote" && currentVote){
-                    var deviceId = data.deviceId || connDeviceMap.get(conn.peer) || conn.peer;
-                    if(votedDevices.has(deviceId)) {
+                    var lsId = data.deviceId || connDeviceMap.get(conn.peer) || conn.peer;
+                    var fpId = data.fingerprintId || connDeviceMap.get(conn.peer + ":fp") || null;
+                    // Check BOTH: if either is already known, reject
+                    if(votedDevices.has(lsId) || (fpId && votedDevices.has("fp:" + fpId))) {
                         conn.send({ type:"already-voted" });
                         return;
                     }
                     if(!currentVote.options.includes(data.option)) return;
-                    votedDevices.add(deviceId);
+                    votedDevices.add(lsId);
+                    if(fpId) votedDevices.add("fp:" + fpId);
                     currentVote.votes[data.option]++;
                     currentVote.totalCast++;
                     conn.send({ type:"vote-confirmed" });
@@ -507,8 +511,9 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         function sendStateToConn(conn){
             if(currentVote){
                 conn.send({ type:"vote-started", topic:currentVote.topic, description:currentVote.description, voteType:currentVote.type, options:currentVote.options, voteRoundId:currentVote.roundId, timerSeconds:timerSecondsLeft });
-                var deviceId = connDeviceMap.get(conn.peer);
-                if(deviceId && votedDevices.has(deviceId)){
+                var lsId = connDeviceMap.get(conn.peer);
+                var fpId = connDeviceMap.get(conn.peer + ":fp");
+                if((lsId && votedDevices.has(lsId)) || (fpId && votedDevices.has("fp:" + fpId))){
                     conn.send({ type:"already-voted" });
                 }
             } else {
@@ -792,12 +797,14 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
     // ===================== VOTER =====================
     function initVoter(presenterPeerId){
-        // Persistent device ID to prevent double voting after page reload
-        var deviceId = localStorage.getItem("drk-device-id");
-        if(!deviceId){
-            deviceId = "dev-" + randomCode(12);
-            localStorage.setItem("drk-device-id", deviceId);
+        // localStorage-based ID (fallback)
+        var lsDeviceId = localStorage.getItem("drk-device-id");
+        if(!lsDeviceId){
+            lsDeviceId = "dev-" + randomCode(12);
+            localStorage.setItem("drk-device-id", lsDeviceId);
         }
+        // Fingerprint ID (computed async, set before connecting)
+        var fingerprintId = null;
         var currentRoundId = null;
 
         // Clean up old voted rounds (older than 24h)
@@ -815,9 +822,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         // Helper functions using BOTH sessionStorage and localStorage
         function hasVotedInRound(roundId){
             if(!roundId) return false;
-            // sessionStorage is most reliable for same-tab reloads
             if(sessionStorage.getItem("drk-voted-" + roundId)) return true;
-            // localStorage as fallback
             try {
                 var rounds = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
                 if(rounds[roundId]) return true;
@@ -855,12 +860,22 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             screens.forEach(function(s){ document.getElementById(s).style.display = s===id ? "flex" : "none"; });
         }
 
+        // Compute fingerprint first, then connect
+        generateDeviceFingerprint().then(function(fp){
+            fingerprintId = fp;
+        }).catch(function(){
+            fingerprintId = null;
+        }).then(function(){
+            startVoterConnection();
+        });
+
+        function startVoterConnection(){
         peer.on("open", function(){
             conn = peer.connect(presenterPeerId, { reliable:true });
 
             conn.on("open", function(){
-                // Register with persistent device ID
-                conn.send({ type:"register", deviceId:deviceId });
+                // Register with both fingerprint and localStorage ID
+                conn.send({ type:"register", deviceId:lsDeviceId, fingerprintId:fingerprintId });
             });
 
             conn.on("data", function(data){
@@ -923,6 +938,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             document.getElementById("v-err-msg").textContent = "Verbindungsfehler: " + err.type;
             showScreen("v-error");
         });
+        } // end startVoterConnection
 
         function startVoterTimer(seconds){
             stopVoterTimer();
@@ -984,7 +1000,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     hasVoted = true;
                     // Store IMMEDIATELY before sending to server
                     markVoted(currentRoundId);
-                    conn.send({ type:"cast-vote", option:opt, deviceId:deviceId });
+                    conn.send({ type:"cast-vote", option:opt, deviceId:lsDeviceId, fingerprintId:fingerprintId });
                     showScreen("v-confirmed");
                 });
                 container.appendChild(btn);
@@ -1024,6 +1040,154 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         var c="abcdefghijklmnopqrstuvwxyz0123456789", r="";
         for(var i=0;i<len;i++) r+=c[Math.floor(Math.random()*c.length)];
         return r;
+    }
+
+    // ===================== BROWSER FINGERPRINT =====================
+    function generateDeviceFingerprint(){
+        return new Promise(function(resolve){
+            var signals = [];
+
+            // 1. Screen properties
+            signals.push("scr:" + screen.width + "x" + screen.height + "x" + screen.availHeight + "x" + screen.colorDepth);
+            signals.push("dpr:" + (window.devicePixelRatio || 1));
+
+            // 2. Hardware signals
+            signals.push("cores:" + (navigator.hardwareConcurrency || "?"));
+            signals.push("mem:" + (navigator.deviceMemory || "?"));
+
+            // 3. Browser/platform signals
+            signals.push("lang:" + (navigator.language || ""));
+            signals.push("langs:" + (navigator.languages ? navigator.languages.join(",") : ""));
+            signals.push("tz:" + (Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : ""));
+            signals.push("touch:" + (navigator.maxTouchPoints || 0));
+            signals.push("plat:" + (navigator.platform || ""));
+
+            // 4. Canvas fingerprint
+            try {
+                var cv = document.createElement("canvas");
+                cv.width = 280; cv.height = 60;
+                var cx = cv.getContext("2d");
+                cx.fillStyle = "#f0e68c";
+                cx.fillRect(0, 0, 280, 60);
+                cx.fillStyle = "#c82124";
+                cx.font = "18px Arial";
+                cx.fillText("DRK Fingerprint Test 2026!", 2, 20);
+                cx.fillStyle = "rgba(0,120,255,0.6)";
+                cx.font = "bold 14px Times New Roman";
+                cx.fillText("Canvas FP \ud83d\ude00", 4, 45);
+                cx.strokeStyle = "#2a4d8f";
+                cx.beginPath();
+                cx.arc(200, 30, 20, 0, Math.PI * 2);
+                cx.stroke();
+                signals.push("canvas:" + cv.toDataURL());
+            } catch(e){
+                signals.push("canvas:err");
+            }
+
+            // 5. WebGL renderer
+            try {
+                var gl = document.createElement("canvas").getContext("webgl");
+                if(gl){
+                    var dbg = gl.getExtension("WEBGL_debug_renderer_info");
+                    if(dbg){
+                        signals.push("glv:" + gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL));
+                        signals.push("glr:" + gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL));
+                    } else {
+                        signals.push("glv:" + gl.getParameter(gl.VENDOR));
+                        signals.push("glr:" + gl.getParameter(gl.RENDERER));
+                    }
+                } else {
+                    signals.push("gl:none");
+                }
+            } catch(e){
+                signals.push("gl:err");
+            }
+
+            // 6. Font detection
+            try {
+                var testFonts = ["Arial","Verdana","Times New Roman","Courier New","Georgia",
+                    "Palatino","Garamond","Comic Sans MS","Impact","Lucida Console",
+                    "Tahoma","Trebuchet MS","Arial Black","Helvetica","Futura",
+                    "Calibri","Cambria","Consolas","Segoe UI","Roboto"];
+                var span = document.createElement("span");
+                span.style.cssText = "position:absolute;left:-9999px;font-size:72px;visibility:hidden";
+                span.textContent = "mmmmmmmmmmlli";
+                document.body.appendChild(span);
+                span.style.fontFamily = "monospace";
+                var baseW = span.offsetWidth;
+                var baseH = span.offsetHeight;
+                var fontBits = "";
+                testFonts.forEach(function(f){
+                    span.style.fontFamily = '"' + f + '", monospace';
+                    fontBits += (span.offsetWidth !== baseW || span.offsetHeight !== baseH) ? "1" : "0";
+                });
+                document.body.removeChild(span);
+                signals.push("fonts:" + fontBits);
+            } catch(e){
+                signals.push("fonts:err");
+            }
+
+            // 7. Audio fingerprint (no audible sound - gain = 0)
+            var audioReady = new Promise(function(res){
+                try {
+                    var actx = new (window.AudioContext || window.webkitAudioContext)();
+                    var osc = actx.createOscillator();
+                    osc.type = "triangle";
+                    osc.frequency.value = 10000;
+                    var comp = actx.createDynamicsCompressor();
+                    comp.threshold.value = -50;
+                    comp.knee.value = 40;
+                    comp.ratio.value = 12;
+                    comp.attack.value = 0;
+                    comp.release.value = 0.25;
+                    var gain = actx.createGain();
+                    gain.gain.value = 0; // silent
+                    var analyser = actx.createAnalyser();
+                    analyser.fftSize = 256;
+                    osc.connect(comp);
+                    comp.connect(analyser);
+                    analyser.connect(gain);
+                    gain.connect(actx.destination);
+                    osc.start(0);
+                    setTimeout(function(){
+                        var data = new Float32Array(analyser.frequencyBinCount);
+                        analyser.getFloatFrequencyData(data);
+                        var sum = 0;
+                        for(var i = 0; i < data.length; i++) sum += Math.abs(data[i]);
+                        signals.push("audio:" + sum.toFixed(4));
+                        osc.stop();
+                        actx.close();
+                        res();
+                    }, 100);
+                } catch(e){
+                    signals.push("audio:err");
+                    res();
+                }
+            });
+
+            audioReady.then(function(){
+                // Hash all signals with SHA-256
+                var raw = signals.join("|");
+                var encoder = new TextEncoder();
+                var data = encoder.encode(raw);
+                crypto.subtle.digest("SHA-256", data).then(function(buf){
+                    var arr = new Uint8Array(buf);
+                    var hex = "";
+                    for(var i = 0; i < arr.length; i++){
+                        hex += ("0" + arr[i].toString(16)).slice(-2);
+                    }
+                    resolve(hex);
+                }).catch(function(){
+                    // Fallback: simple hash if crypto.subtle unavailable (http)
+                    var hash = 0;
+                    for(var i = 0; i < raw.length; i++){
+                        hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+                        hash |= 0;
+                    }
+                    resolve("fallback-" + Math.abs(hash).toString(36));
+                });
+            });
+        });
     }
 })();
 </script>
