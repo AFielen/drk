@@ -16,6 +16,7 @@ Digitales Abstimmungssystem für Vereinssitzungen des Deutschen Roten Kreuzes. E
 - **Echtzeit-Ergebnisse** mit Live-Balkendiagrammen
 - **Konfigurierbares Zeitlimit** -- einstellbar pro Versammlung (Standard: 5 Minuten), pro Abstimmung ein-/ausschaltbar
 - **Doppelabstimmungs-Schutz** -- jedes Geraet kann pro Runde nur einmal abstimmen
+- **Zwei Abstimmungsmodi** -- Offener Modus (eigenes Smartphone) und Kiosk-Modus (durchgereichte Geraete mit Token-Codes)
 - **Keine Installation noetig** -- laeuft komplett im Browser
 - **Kein Server noetig** -- Peer-to-Peer-Kommunikation via WebRTC (PeerJS)
 - **Abstimmungshistorie** -- alle Ergebnisse der Versammlung auf einen Blick
@@ -35,21 +36,47 @@ Gehostet auf GitHub Pages: **https://afielen.github.io/drk/index.html**
 
 ## Nutzung
 
-### Versammlungsleiter (Laptop/Beamer)
+### Offener Modus (Standard)
+
+**Versammlungsleiter (Laptop/Beamer):**
 
 1. Seite im Browser oeffnen
 2. Versammlungstitel und Anzahl der Stimmberechtigten eingeben
-3. Abstimmungsthema eingeben und Abstimmung starten
-4. QR-Code wird angezeigt -- Mitglieder scannen diesen
-5. Abstimmung schliessen, wenn alle abgestimmt haben
-6. Naechste Abstimmung starten oder Versammlung beenden
+3. Modus "Offener Modus" auswaehlen (Voreinstellung)
+4. Abstimmungsthema eingeben und Abstimmung starten
+5. QR-Code wird angezeigt -- Mitglieder scannen diesen
+6. Abstimmung schliessen, wenn alle abgestimmt haben
+7. Naechste Abstimmung starten oder Versammlung beenden
 
-### Mitglieder (Smartphone)
+**Mitglieder (Smartphone):**
 
 1. QR-Code mit der Smartphone-Kamera scannen
 2. Link im Browser oeffnen
 3. Warten bis die Abstimmung gestartet wird
 4. Stimme abgeben -- fertig!
+
+### Kiosk-Modus (Token-basiert)
+
+Im Kiosk-Modus werden ein oder mehrere Geraete (Tablets/Smartphones) durchgereicht. Jedes Mitglied authentifiziert sich mit einem einmaligen Token-Code.
+
+**Versammlungsleiter (Laptop/Beamer):**
+
+1. Seite im Browser oeffnen
+2. Versammlungstitel und Anzahl der Stimmberechtigten eingeben
+3. Modus "Kiosk-Modus" auswaehlen
+4. "Token-Codes generieren" klicken -- fuer jedes Mitglied wird ein 6-stelliger Code erzeugt (z.B. `K4F-9M2`)
+5. "Codes drucken" klicken -- druckbare Karten im Visitenkartenformat (3x4 pro A4-Seite), zum Ausschneiden und Verteilen
+6. Kiosk-Geraete ueber QR-Code verbinden
+7. Abstimmung starten -- auf den Kiosk-Geraeten erscheint die Code-Eingabe
+
+**Mitglieder (am Kiosk-Geraet):**
+
+1. 6-stelligen Code ueber das Touch-Numpad oder die Tastatur eingeben
+2. Nach Validierung: Stimme abgeben (Ja / Nein / Enthaltung oder eigene Optionen)
+3. Bestaetigung wird angezeigt -- Geraet setzt sich nach 3 Sekunden automatisch zurueck
+4. Geraet an die naechste Person weitergeben
+
+**Hinweis:** Jeder Token-Code kann pro Abstimmungsrunde nur einmal verwendet werden. In der naechsten Runde ist derselbe Code erneut gueltig.
 
 ## Technik
 
