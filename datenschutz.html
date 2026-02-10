@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datenschutzerkl&auml;rung - DRK Vereinsabstimmung</title>
+    <link rel="stylesheet" href="fonts/fonts.css">
+    <style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--drk:#e30613;--drk-dark:#b70510;--white:#fff;--bg:#f4f4f4;--text:#2a2a2a;--text-light:#777;--border:#e0e0e0;--radius:10px}
+html,body{height:100%}
+body{font-family:'Source Sans 3',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;display:flex;flex-direction:column;min-height:100%}
+header{background:var(--drk);color:var(--white);padding:1rem 1.5rem;display:flex;align-items:center;gap:.75rem}
+.drk-logo{display:flex;align-items:center;gap:.75rem}
+.drk-logo h1{font-size:1.4rem;font-weight:700}
+.drk-logo .sub{font-size:.8rem;opacity:.85}
+main{flex:1;max-width:800px;width:100%;margin:0 auto;padding:1.5rem 1rem}
+.card{background:var(--white);border-radius:var(--radius);padding:2rem;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card h2{font-size:1.3rem;color:var(--drk);margin-bottom:1.25rem;padding-bottom:.5rem;border-bottom:2px solid var(--drk)}
+.section{margin-bottom:1.5rem}
+.section:last-child{margin-bottom:0}
+.section h3{font-size:1.05rem;font-weight:700;margin-bottom:.4rem;color:var(--text)}
+.section p{margin-bottom:.5rem}
+.section ul{margin:.25rem 0 .5rem 1.5rem}
+.section ul li{margin-bottom:.25rem}
+.section a{color:var(--drk);text-decoration:none}
+.section a:hover{text-decoration:underline}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;margin-bottom:1rem;color:var(--drk);text-decoration:none;font-weight:600;font-size:.95rem}
+.back-link:hover{text-decoration:underline}
+footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
+footer a{color:var(--text-light);text-decoration:underline}
+footer a:hover{color:var(--drk)}
+@media(max-width:600px){header{padding:.75rem 1rem}.drk-logo h1{font-size:1.15rem}.card{padding:1.25rem}}
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="drk-logo">
+        <img src="logo.png" alt="DRK Logo" width="42" height="42">
+        <div><h1>DRK Vereinsabstimmung</h1><div class="sub">Digitales Abstimmungssystem</div></div>
+    </div>
+</header>
+
+<main>
+    <a href="index.html" class="back-link">&larr; Zurueck zur Abstimmung</a>
+
+    <div class="card">
+        <h2>Datenschutzerkl&auml;rung</h2>
+
+        <div class="section">
+            <h3>1. Verantwortlicher</h3>
+            <p>DRK-Kreisverband St&auml;dteRegion Aachen e.V.</p>
+            <p>Henry-Dunant-Platz 1, 52146 W&uuml;rselen</p>
+            <p>E-Mail: <a href="mailto:Info@DRK-Aachen.de">Info@DRK-Aachen.de</a></p>
+            <p>Telefon: 02405 6039-100</p>
+        </div>
+
+        <div class="section">
+            <h3>2. Grundsatz: Keine Erhebung personenbezogener Daten</h3>
+            <p>Diese Anwendung wurde bewusst so konzipiert, dass <strong>keine personenbezogenen Daten</strong> erhoben, gespeichert oder an Dritte &uuml;bermittelt werden. Es gibt:</p>
+            <ul>
+                <li>Keine Registrierung oder Anmeldung</li>
+                <li>Keine Cookies</li>
+                <li>Keine Analyse- oder Tracking-Dienste (kein Google Analytics, kein Matomo o.&Auml;.)</li>
+                <li>Keinen eigenen Server &ndash; die gesamte Kommunikation l&auml;uft direkt zwischen den Ger&auml;ten (Peer-to-Peer)</li>
+                <li>Keine Datenbank</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>3. Peer-to-Peer-Kommunikation (WebRTC / PeerJS)</h3>
+            <p>Die Anwendung nutzt <strong>WebRTC</strong> (Web Real-Time Communication) &uuml;ber die Bibliothek <strong>PeerJS</strong> f&uuml;r die Echtzeit-Kommunikation zwischen Versammlungsleiter und Teilnehmern. Dabei werden folgende technische Verbindungen hergestellt:</p>
+            <ul>
+                <li><strong>PeerJS-Signaling-Server</strong> (0.peerjs.com): Dient ausschlie&szlig;lich dem initialen Verbindungsaufbau zwischen den Ger&auml;ten. Es werden dabei keine Abstimmungsdaten &uuml;bertragen &ndash; lediglich technische Verbindungsinformationen (sog. Signaling).</li>
+                <li><strong>STUN/TURN-Server</strong> (Google STUN-Server): Werden ben&ouml;tigt, um die direkte Verbindung zwischen Ger&auml;ten herzustellen (NAT-Traversal). Es werden dabei keine inhaltlichen Daten &uuml;bertragen.</li>
+            </ul>
+            <p>Nach dem Verbindungsaufbau flie&szlig;en alle Daten (Abstimmungsoptionen, abgegebene Stimmen, Ergebnisse) <strong>direkt zwischen den Ger&auml;ten</strong> &uuml;ber einen verschl&uuml;sselten WebRTC-DataChannel &ndash; ohne Umweg &uuml;ber einen Server.</p>
+        </div>
+
+        <div class="section">
+            <h3>4. Anonymit&auml;t der Abstimmung</h3>
+            <p>Die Abstimmung ist <strong>vollst&auml;ndig anonym</strong>. Der Versammlungsleiter sieht ausschlie&szlig;lich die aggregierten Ergebnisse (z.B. &bdquo;5&times; Ja, 3&times; Nein&ldquo;). Eine Zuordnung einzelner Stimmen zu Personen oder Ger&auml;ten ist <strong>technisch nicht m&ouml;glich</strong>, da:</p>
+            <ul>
+                <li>Stimmen ohne Absenderkennung &uuml;bermittelt werden</li>
+                <li>Keine Protokollierung der Verbindungen stattfindet</li>
+                <li>Keine IP-Adressen gespeichert werden</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>5. Doppelabstimmungs-Schutz (Browser-Fingerprinting)</h3>
+            <p>Um Mehrfachabstimmungen zu verhindern, erzeugt die Anwendung einen <strong>anonymen Ger&auml;te-Hash</strong> aus verschiedenen Browser-Signalen (Canvas, WebGL, Audio API, Bildschirmaufl&ouml;sung, installierte Schriftarten, Hardware-Informationen). Dieser Hash:</p>
+            <ul>
+                <li>Wird <strong>nur lokal</strong> auf dem Ger&auml;t des Versammlungsleiters gespeichert</li>
+                <li>Dient ausschlie&szlig;lich der Erkennung bereits abgegebener Stimmen innerhalb einer laufenden Versammlung</li>
+                <li>L&auml;sst <strong>keinen R&uuml;ckschluss</strong> auf die Person oder das konkrete Ger&auml;t zu</li>
+                <li>Wird nach Beendigung der Versammlung oder Schlie&szlig;en des Browsers <strong>unwiderruflich gel&ouml;scht</strong></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>6. Lokale Speicherung (localStorage / sessionStorage)</h3>
+            <p>Die Anwendung nutzt den lokalen Speicher des Browsers (localStorage und sessionStorage) ausschlie&szlig;lich f&uuml;r:</p>
+            <ul>
+                <li>Erkennung bereits abgegebener Stimmen (Schutz vor Doppelabstimmung)</li>
+                <li>Tempor&auml;re Sitzungsdaten w&auml;hrend einer laufenden Versammlung</li>
+            </ul>
+            <p>Diese Daten verbleiben <strong>ausschlie&szlig;lich auf Ihrem Ger&auml;t</strong> und werden nicht an Dritte &uuml;bermittelt. Sie k&ouml;nnen diese Daten jederzeit &uuml;ber die Browser-Einstellungen l&ouml;schen.</p>
+        </div>
+
+        <div class="section">
+            <h3>7. Hosting (GitHub Pages)</h3>
+            <p>Die Anwendung wird &uuml;ber <strong>GitHub Pages</strong> (GitHub Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA) bereitgestellt. GitHub erhebt dabei ggf. technische Zugriffsdaten (IP-Adresse, Zeitstempel, aufgerufene Seite) in Server-Logfiles. N&auml;heres regelt die <a href="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">Datenschutzerkl&auml;rung von GitHub</a>. Wir haben keinen Einfluss auf diese Datenerhebung durch GitHub.</p>
+        </div>
+
+        <div class="section">
+            <h3>8. Keine externen Schriftarten oder CDNs</h3>
+            <p>Alle verwendeten Schriftarten (Source Sans 3, Source Serif 4) werden <strong>lokal gehostet</strong> und direkt mit der Anwendung ausgeliefert. Es findet <strong>keine Verbindung zu Google Fonts</strong> oder anderen Schriftarten-Diensten statt. Einzige externe Ressource ist die PeerJS-Bibliothek, die &uuml;ber ein CDN (unpkg.com) eingebunden wird.</p>
+        </div>
+
+        <div class="section">
+            <h3>9. Keine persistente Datenspeicherung</h3>
+            <p>Nach dem Beenden der Versammlung oder Schlie&szlig;en des Browser-Fensters sind alle Daten <strong>unwiderruflich gel&ouml;scht</strong>. Es gibt keine M&ouml;glichkeit, vergangene Abstimmungen oder Ergebnisse nachtr&auml;glich einzusehen &ndash; weder durch den Versammlungsleiter noch durch Dritte.</p>
+        </div>
+
+        <div class="section">
+            <h3>10. Ihre Rechte</h3>
+            <p>Da keine personenbezogenen Daten erhoben oder gespeichert werden, entfallen die &uuml;blichen Betroffenenrechte (Auskunft, L&ouml;schung, Berichtigung etc.) im Kontext dieser Anwendung. Sollten Sie dennoch Fragen zum Datenschutz haben, k&ouml;nnen Sie sich jederzeit an uns wenden:</p>
+            <p>E-Mail: <a href="mailto:Info@DRK-Aachen.de">Info@DRK-Aachen.de</a></p>
+        </div>
+
+        <div class="section">
+            <h3>11. &Auml;nderungen</h3>
+            <p>Wir behalten uns vor, diese Datenschutzerkl&auml;rung bei Bedarf anzupassen, insbesondere bei technischen &Auml;nderungen an der Anwendung. Die jeweils aktuelle Fassung ist &uuml;ber den Link in der Anwendung abrufbar.</p>
+        </div>
+    </div>
+</main>
+
+<footer>DRK Vereinsabstimmung &mdash; Deutsches Rotes Kreuz &middot; <a href="impressum.html">Impressum</a> &middot; <a href="datenschutz.html">Datenschutz</a></footer>
+
+</body>
+</html>

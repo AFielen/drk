@@ -1,10 +1,14 @@
 # DRK Vereinsabstimmung
 
-Digitales Abstimmungssystem für Vereinssitzungen des Deutschen Roten Kreuzes. Ermöglicht geheime Abstimmungen per QR-Code direkt vom Smartphone -- ohne Server, ohne Installation.
+Digitales Abstimmungssystem fuer Vereinsversammlungen des Deutschen Roten Kreuzes. Ermoeglicht geheime Abstimmungen per QR-Code direkt vom Smartphone -- ohne Server, ohne Installation, vollstaendig DSGVO-konform.
+
+## Live-Demo
+
+Gehostet auf GitHub Pages: **https://afielen.github.io/drk/index.html**
 
 ## Funktionsweise
 
-1. **Versammlungsleiter** öffnet die App auf dem Laptop/Beamer und startet eine Versammlung
+1. **Versammlungsleiter** oeffnet die App auf dem Laptop/Beamer und startet eine Versammlung
 2. Ein **QR-Code** wird auf der Leinwand angezeigt
 3. **Mitglieder** scannen den QR-Code mit dem Smartphone und stimmen anonym ab
 4. Die **Ergebnisse** werden in Echtzeit auf dem Beamer angezeigt
@@ -12,27 +16,29 @@ Digitales Abstimmungssystem für Vereinssitzungen des Deutschen Roten Kreuzes. E
 ## Features
 
 - **Vollstaendig anonyme Abstimmung** -- es werden keinerlei persoenliche Daten erhoben oder gespeichert
-- **Ja / Nein / Enthaltung** oder eigene Optionen
+- **Ja / Nein / Enthaltung** oder frei definierbare Optionen
 - **Echtzeit-Ergebnisse** mit Live-Balkendiagrammen
-- **Konfigurierbares Zeitlimit** -- einstellbar pro Versammlung (Standard: 5 Minuten), pro Abstimmung ein-/ausschaltbar
-- **Doppelabstimmungs-Schutz** -- jedes Geraet kann pro Runde nur einmal abstimmen
-- **Zwei Abstimmungsmodi** -- Offener Modus (eigenes Smartphone) und Stimmkarten-Modus (bereitgestellte Geraete mit persoenlichen Stimmkarten-Codes)
+- **Konfigurierbares Zeitlimit** -- einstellbar pro Versammlung, pro Abstimmung ein-/ausschaltbar
+- **Doppelabstimmungs-Schutz** -- mehrstufig (Browser-Fingerprinting, localStorage, Presenter-Pruefung)
+- **Zwei Abstimmungsmodi** -- Offener Modus und Stimmkarten-Modus (Token-basiert)
+- **PDF-Protokoll-Export** -- automatisch generiertes Abstimmungsprotokoll mit Zeitstempeln (jsPDF)
+- **Abstimmungshistorie** -- alle Ergebnisse der Versammlung auf einen Blick
+- **Danke-Seite** -- nach Versammlungsende mit Statistik-Uebersicht
 - **Keine Installation noetig** -- laeuft komplett im Browser
 - **Kein Server noetig** -- Peer-to-Peer-Kommunikation via WebRTC (PeerJS)
-- **Abstimmungshistorie** -- alle Ergebnisse der Versammlung auf einen Blick
+- **Lokal gehostete Schriftarten** -- kein Laden von Google Fonts, DSGVO-konform
 
 ## Datenschutz und Anonymitaet
 
 - **Keine Registrierung, kein Login** -- Mitglieder scannen einfach den QR-Code und stimmen ab
-- **Keine Datenbank, kein Server** -- die gesamte Kommunikation laeuft direkt zwischen den Geraeten (Peer-to-Peer via WebRTC), es werden keine Daten auf einem Server gespeichert
+- **Keine Datenbank, kein Server** -- die gesamte Kommunikation laeuft direkt zwischen den Geraeten (Peer-to-Peer via WebRTC)
 - **Keine Zuordnung von Stimmen zu Personen** -- der Versammlungsleiter sieht ausschliesslich die aggregierten Ergebnisse (z.B. "5x Ja, 3x Nein"), niemals wer wie abgestimmt hat
 - **Keine persistente Datenspeicherung** -- nach Beenden der Versammlung oder Schliessen des Browsers sind alle Daten unwiederbringlich weg
-- **Kein Tracking, keine Cookies, keine Analyse-Tools** -- die App verwendet keinerlei Tracking- oder Analysedienste
+- **Kein Tracking, keine Cookies, keine Analyse-Tools**
+- **Keine externen Schriftarten** -- alle Fonts werden lokal ausgeliefert (kein Google Fonts)
 - **Open Source** -- der gesamte Quellcode ist einsehbar und ueberpruefbar
 
-## Demo
-
-Gehostet auf GitHub Pages: **https://afielen.github.io/drk/index.html**
+Eine ausfuehrliche Datenschutzerklaerung ist in der App unter [datenschutz.html](datenschutz.html) verfuegbar.
 
 ## Nutzung
 
@@ -65,7 +71,7 @@ Im Stimmkarten-Modus werden ein oder mehrere Geraete (Tablets/Smartphones) berei
 2. Versammlungstitel und Anzahl der Stimmberechtigten eingeben
 3. Modus "Stimmkarten-Modus" auswaehlen
 4. "Token-Codes generieren" klicken -- fuer jedes Mitglied wird ein 6-stelliger Code erzeugt (z.B. `K4F-9M2`)
-5. "Codes drucken" klicken -- druckbare Karten im Visitenkartenformat (3x4 pro A4-Seite), zum Ausschneiden und Verteilen
+5. "Codes drucken" klicken -- druckbare Karten im Visitenkartenformat (3x4 pro A4-Seite)
 6. Stimmkarten-Geraete ueber QR-Code verbinden
 7. Abstimmung starten -- auf den Stimmkarten-Geraeten erscheint die Code-Eingabe
 
@@ -78,20 +84,66 @@ Im Stimmkarten-Modus werden ein oder mehrere Geraete (Tablets/Smartphones) berei
 
 **Hinweis:** Jeder Token-Code kann pro Abstimmungsrunde nur einmal verwendet werden. In der naechsten Runde ist derselbe Code erneut gueltig.
 
+### PDF-Protokoll
+
+Nach Abschluss der Versammlung kann ein PDF-Protokoll heruntergeladen werden. Das Protokoll enthaelt:
+
+- Versammlungstitel, Datum und Modus
+- Alle Abstimmungen mit Thema, Zeitraum und Ergebnissen
+- Visuelle Balkendiagramme
+- Zusammenfassung (Angenommen/Abgelehnt/Gleichstand)
+
+Der Export ist auch waehrend der Versammlung ueber den Button "Ergebnisse als PDF exportieren" in der Abstimmungshistorie moeglich.
+
 ## Technik
 
-- **Einzelne HTML-Datei** -- kein Build-Prozess, keine Abhaengigkeiten
+- **Einzelne HTML-Datei** -- kein Build-Prozess noetig
 - **PeerJS** (WebRTC) fuer serverlose Echtzeit-Kommunikation
+- **jsPDF** (v2.5.1) fuer PDF-Protokoll-Export
 - **QR-Code-Generator** (qrcode-generator v1.4.4) direkt eingebettet
-- **Browser-Fingerprinting** zur Verhinderung von Mehrfachabstimmungen (auch im Inkognito-Modus)
+- **Browser-Fingerprinting** (Canvas, WebGL, Audio, Schriftarten, Hardware) zur Verhinderung von Mehrfachabstimmungen
+- **Lokal gehostete Schriftarten** (Source Sans 3, Source Serif 4) -- kein Google Fonts
 - Optimiert fuer **Chrome** (QR-Code-Darstellung in Edge eingeschraenkt)
 
-## Hinweis zum Doppelabstimmungs-Schutz
+## Doppelabstimmungs-Schutz
 
 Die App verwendet ein mehrstufiges System, um Mehrfachabstimmungen zu verhindern:
 
-1. **Browser-Fingerprinting** -- Beim Verbinden wird ein anonymer Geraete-Hash aus verschiedenen Browser-Signalen (Canvas, WebGL, Audio API, Bildschirm, Schriftarten, Hardware) erzeugt. Dieser Hash ist auch im Inkognito-Modus identisch und verhindert erneutes Abstimmen ueber ein privates Fenster desselben Browsers.
+1. **Browser-Fingerprinting** -- Beim Verbinden wird ein anonymer Geraete-Hash aus verschiedenen Browser-Signalen erzeugt. Dieser Hash ist auch im Inkognito-Modus identisch.
 2. **localStorage / sessionStorage** -- Zusaetzliche Absicherung fuer normale Browser-Fenster und Page Reloads.
-3. **Presenter-seitige Pruefung** -- Der Versammlungsleiter-Rechner fuehrt eine eigene Liste aller bereits abgegebenen Stimmen (nach Fingerprint und Geraete-ID).
+3. **Presenter-seitige Pruefung** -- Der Versammlungsleiter-Rechner fuehrt eine eigene Liste aller bereits abgegebenen Stimmen.
 
-**Wichtig:** Ein komplett anderer Browser (z.B. Chrome vs. Firefox) oder ein anderes Geraet erzeugt einen anderen Fingerprint -- das ist gewollt, da in diesem Fall von einer anderen Person ausgegangen wird. Fuer maximale Sicherheit sollte der Versammlungsleiter die Anzahl der Stimmberechtigten korrekt einstellen und die Teilnehmerzahl im Blick behalten.
+**Wichtig:** Ein komplett anderer Browser (z.B. Chrome vs. Firefox) oder ein anderes Geraet erzeugt einen anderen Fingerprint -- das ist gewollt, da in diesem Fall von einer anderen Person ausgegangen wird.
+
+## Projektstruktur
+
+```
+index.html          Hauptanwendung (Presenter + Voter)
+danke.html          Danke-Seite nach Versammlungsende
+datenschutz.html    Datenschutzerklaerung
+impressum.html      Impressum
+fonts/              Lokal gehostete Schriftarten
+  fonts.css         @font-face-Deklarationen
+  *.woff2           Schriftarten-Dateien (Source Sans 3, Source Serif 4)
+logo.png            DRK-Logo
+logo.svg            DRK-Logo (SVG)
+```
+
+## Lokale Schriftarten einrichten
+
+Die Schriftarten (Source Sans 3, Source Serif 4) muessen manuell heruntergeladen werden:
+
+1. [Source Sans 3](https://fonts.google.com/specimen/Source+Sans+3) herunterladen
+2. [Source Serif 4](https://fonts.google.com/specimen/Source+Serif+4) herunterladen
+3. Die .woff2-Dateien in den `fonts/`-Ordner legen (Dateinamen siehe `fonts/fonts.css`)
+
+## Lizenz
+
+Open Source -- der gesamte Quellcode ist einsehbar und ueberpruefbar.
+
+## Kontakt
+
+DRK-Kreisverband StaedteRegion Aachen e.V.
+Henry-Dunant-Platz 1, 52146 Wuerselen
+E-Mail: Info@DRK-Aachen.de
+Web: https://www.drk-aachen.de
