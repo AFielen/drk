@@ -253,6 +253,20 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             <button class="btn btn-primary" id="btn-start-vote">Abstimmung starten</button>
         </div>
 
+        <!-- Vote info box -->
+        <div id="p-vote-info" class="info-box hidden">
+            <h3>So funktioniert die Abstimmung</h3>
+            <ul>
+                <li>Geben Sie oben das <strong>Thema</strong> und optional eine Beschreibung ein.</li>
+                <li>Waehlen Sie die <strong>Abstimmungsart</strong>: Ja/Nein/Enthaltung oder eigene Optionen.</li>
+                <li>Optional: Aktivieren Sie ein <strong>Zeitlimit</strong> -- nach Ablauf wird die Abstimmung automatisch geschlossen.</li>
+                <li>Nach dem Start erscheint ein <strong>QR-Code</strong> auf dem Bildschirm. Die Mitglieder scannen diesen mit dem Smartphone und geben ihre Stimme ab.</li>
+                <li>Die Ergebnisse werden <strong>live</strong> auf dem Bildschirm aktualisiert.</li>
+                <li>Sie koennen die Abstimmung jederzeit manuell schliessen oder warten, bis alle abgestimmt haben bzw. das Zeitlimit ablaeuft.</li>
+            </ul>
+            <p style="margin-top:.5rem">Jede Stimme ist <strong>anonym</strong> -- es ist nicht erkennbar, wer wie abgestimmt hat. Jedes Geraet kann pro Abstimmungsrunde nur einmal abstimmen.</p>
+        </div>
+
         <!-- Active vote -->
         <div id="p-active-vote" class="card hidden">
             <h3 id="lbl-vote-topic"></h3>
@@ -379,7 +393,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             inpTitle: $("inp-title"), inpVoters: $("inp-voters"),
             btnStartSession: $("btn-start-session"), btnEndSession: $("btn-end-session"),
             lblTitle: $("lbl-title"), lblVoters: $("lbl-voters"),
-            newVote: $("p-new-vote"), activeVote: $("p-active-vote"),
+            newVote: $("p-new-vote"), voteInfo: $("p-vote-info"), activeVote: $("p-active-vote"),
             result: $("p-result"), historyCard: $("p-history"),
             inpTopic: $("inp-topic"), inpDesc: $("inp-desc"),
             customOpts: $("p-custom-opts"), inpCustom: $("inp-custom"),
@@ -425,6 +439,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             peer.on("open", function(){
                 el.connecting.classList.add("hidden");
                 el.newVote.classList.remove("hidden");
+                el.voteInfo.classList.remove("hidden");
             });
 
             peer.on("connection", function(conn){
@@ -440,6 +455,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     peer.on("open", function(){
                         el.connecting.classList.add("hidden");
                         el.newVote.classList.remove("hidden");
+                        el.voteInfo.classList.remove("hidden");
                     });
                     peer.on("connection", function(conn){ setupConnection(conn); });
                 } else {
@@ -604,6 +620,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         // ---- UI ----
         function showNewVoteForm(){
             el.newVote.classList.remove("hidden");
+            el.voteInfo.classList.remove("hidden");
             el.activeVote.classList.add("hidden");
             el.result.classList.add("hidden");
             el.inpTopic.value = "";
@@ -673,6 +690,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
         function showActiveVote(){
             el.newVote.classList.add("hidden");
+            el.voteInfo.classList.add("hidden");
             el.result.classList.add("hidden");
             el.activeVote.classList.remove("hidden");
 
@@ -729,6 +747,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
         function showResult(result){
             el.activeVote.classList.add("hidden");
+            el.voteInfo.classList.add("hidden");
             el.result.classList.remove("hidden");
             el.lblResultTopic.textContent = result.topic;
             var html = "";
