@@ -106,6 +106,23 @@ input:focus,textarea:focus{outline:none;border-color:var(--drk);box-shadow:0 0 0
 .history-result.neutral{background:#eee;color:var(--text)}
 .history-details{width:100%;font-size:.85rem;color:var(--text-light)}
 .empty-state{text-align:center;color:var(--text-light);padding:1rem;font-style:italic}
+/* Timer */
+.timer-settings{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.timer-settings label{font-weight:600;font-size:.9rem}
+.timer-toggle{display:flex;align-items:center;gap:.4rem;cursor:pointer;font-size:.9rem}
+.timer-toggle input{width:18px;height:18px;accent-color:var(--drk)}
+.timer-inline{display:flex;align-items:center;gap:.35rem}
+.timer-inline input[type=number]{width:70px;padding:.4rem .5rem;text-align:center}
+.timer-display{text-align:center;margin:.75rem 0}
+.timer-countdown{font-size:2rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.05em}
+.timer-countdown.warning{color:var(--warning)}
+.timer-countdown.danger{color:var(--danger);animation:pulse 1s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.timer-label{font-size:.8rem;color:var(--text-light)}
+.voter-timer{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--drk);margin:.25rem 0}
+.voter-timer.warning{color:var(--warning)}
+.voter-timer.danger{color:var(--danger);animation:pulse 1s ease infinite}
+.result-not-voted{margin-top:.75rem;font-size:.95rem;color:var(--text-light);text-align:center}
 
 /* === VOTER STYLES === */
 #view-voter{flex:1;display:flex;flex-direction:column}
@@ -166,6 +183,16 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             <label for="inp-voters">Anzahl Stimmberechtigte</label>
             <input type="number" id="inp-voters" min="1" value="10">
         </div>
+        <div class="form-group">
+            <label>Zeitlimit pro Abstimmung</label>
+            <div class="timer-settings">
+                <label class="timer-toggle"><input type="checkbox" id="chk-timer" checked> Zeitlimit aktivieren</label>
+                <div class="timer-inline">
+                    <input type="number" id="inp-timer-min" min="1" max="60" value="5">
+                    <span>Minuten</span>
+                </div>
+            </div>
+        </div>
         <button class="btn btn-primary" id="btn-start-session">Sitzung starten</button>
     </section>
 
@@ -206,6 +233,9 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     <textarea id="inp-custom" rows="3" placeholder="Option A&#10;Option B&#10;Option C"></textarea>
                 </div>
             </div>
+            <div class="form-group">
+                <label class="timer-toggle"><input type="checkbox" id="chk-vote-timer" checked> Zeitlimit: <span id="lbl-timer-dur">5 Minuten</span></label>
+            </div>
             <button class="btn btn-primary" id="btn-start-vote">Abstimmung starten</button>
         </div>
 
@@ -220,6 +250,10 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     <div class="qr-url" id="lbl-vote-url"></div>
                 </div>
                 <div class="progress-area">
+                    <div id="p-timer-area" class="timer-display hidden">
+                        <div class="timer-countdown" id="lbl-timer">05:00</div>
+                        <div class="timer-label">Verbleibende Zeit</div>
+                    </div>
                     <div class="connected-count"><span id="lbl-connected">0</span> Teilnehmer verbunden</div>
                     <div class="vote-progress-info">
                         <strong><span id="lbl-cast">0</span></strong> von <strong><span id="lbl-total">0</span></strong> Stimmen
@@ -239,6 +273,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             <h2 style="color:var(--text)">Ergebnis</h2>
             <h3 id="lbl-result-topic"></h3>
             <div id="result-bars" style="margin-top:1rem"></div>
+            <div id="result-not-voted" class="result-not-voted hidden"></div>
             <div id="result-summary" class="result-summary"></div>
             <div class="vote-actions" style="margin-top:1.25rem">
                 <button class="btn btn-primary" id="btn-next-vote">Nächste Abstimmung</button>
@@ -269,6 +304,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
     <div id="v-voting" class="screen" style="display:none">
         <div class="vote-topic" id="v-topic"></div>
         <div class="vote-desc" id="v-desc"></div>
+        <div class="voter-timer hidden" id="v-timer"></div>
         <div class="vote-options" id="v-options"></div>
     </div>
     <div id="v-confirmed" class="screen" style="display:none">
@@ -320,6 +356,10 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         var votedDevices = new Set();
         var connDeviceMap = new Map();
         var history = [];
+        var timerEnabled = true;
+        var timerMinutes = 5;
+        var timerSecondsLeft = 0;
+        var timerInterval = null;
 
         var $ = function(id){ return document.getElementById(id); };
         var el = {
@@ -338,7 +378,11 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             lblConnected: $("lbl-connected"), lblCast: $("lbl-cast"), lblTotal: $("lbl-total"),
             barProgress: $("bar-progress"), liveBars: $("live-bars"),
             lblResultTopic: $("lbl-result-topic"), resultBars: $("result-bars"),
+            resultNotVoted: $("result-not-voted"),
             resultSummary: $("result-summary"), historyList: $("history-list"),
+            chkTimer: $("chk-timer"), inpTimerMin: $("inp-timer-min"),
+            chkVoteTimer: $("chk-vote-timer"), lblTimerDur: $("lbl-timer-dur"),
+            timerArea: $("p-timer-area"), lblTimer: $("lbl-timer"),
         };
 
         // Vote type toggle
@@ -355,9 +399,15 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             if(!sessionTitle){ alert("Bitte Sitzungstitel eingeben."); return; }
             if(!voterCount || voterCount < 1){ alert("Bitte gültige Anzahl eingeben."); return; }
 
+            timerEnabled = el.chkTimer.checked;
+            timerMinutes = parseInt(el.inpTimerMin.value, 10) || 5;
+            if(timerMinutes < 1) timerMinutes = 1;
+
             history = [];
             el.lblTitle.textContent = sessionTitle;
             el.lblVoters.textContent = voterCount + " Stimmberechtigte";
+            el.chkVoteTimer.checked = timerEnabled;
+            el.lblTimerDur.textContent = timerMinutes + " Minuten";
             el.setup.classList.add("hidden");
             el.session.classList.remove("hidden");
             el.connecting.classList.remove("hidden");
@@ -433,7 +483,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
         function sendStateToConn(conn){
             if(currentVote){
-                conn.send({ type:"vote-started", topic:currentVote.topic, description:currentVote.description, voteType:currentVote.type, options:currentVote.options, voteRoundId:currentVote.roundId });
+                conn.send({ type:"vote-started", topic:currentVote.topic, description:currentVote.description, voteType:currentVote.type, options:currentVote.options, voteRoundId:currentVote.roundId, timerSeconds:timerSecondsLeft });
                 var deviceId = connDeviceMap.get(conn.peer);
                 if(deviceId && votedDevices.has(deviceId)){
                     conn.send({ type:"already-voted" });
@@ -456,6 +506,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         // ---- End session ----
         el.btnEndSession.addEventListener("click", function(){
             if(!confirm("Sitzung wirklich beenden?")) return;
+            stopTimer();
             broadcast({ type:"session-ended" });
             if(peer) peer.destroy();
             peer = null;
@@ -488,23 +539,25 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             var votes = {};
             options.forEach(function(o){ votes[o] = 0; });
             var roundId = "round-" + Date.now() + "-" + randomCode(4);
-            currentVote = { topic:topic, description:desc, type:vtype, options:options, votes:votes, totalCast:0, roundId:roundId };
+            var voteTimerOn = el.chkVoteTimer.checked;
+            var voteTimerSec = voteTimerOn ? timerMinutes * 60 : 0;
+            currentVote = { topic:topic, description:desc, type:vtype, options:options, votes:votes, totalCast:0, roundId:roundId, timerEnabled:voteTimerOn, timerSeconds:voteTimerSec };
             votedDevices = new Set();
 
-            broadcast({ type:"vote-started", topic:topic, description:desc, voteType:vtype, options:options, voteRoundId:roundId });
+            broadcast({ type:"vote-started", topic:topic, description:desc, voteType:vtype, options:options, voteRoundId:roundId, timerSeconds:voteTimerSec });
             showActiveVote();
+            startTimer();
         });
 
         // ---- Close vote ----
         el.btnCloseVote.addEventListener("click", function(){
-            if(!currentVote || currentVote.totalCast === 0){
-                alert("Es wurde noch keine Stimme abgegeben."); return;
-            }
+            if(!currentVote){ return; }
             closeVote();
         });
 
         el.btnCancelVote.addEventListener("click", function(){
             if(!confirm("Abstimmung abbrechen?")) return;
+            stopTimer();
             currentVote = null;
             broadcast({ type:"vote-cancelled" });
             showNewVoteForm();
@@ -513,11 +566,13 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         el.btnNextVote.addEventListener("click", showNewVoteForm);
 
         function closeVote(){
+            stopTimer();
             var v = currentVote;
+            var notVoted = voterCount - v.totalCast;
             var result = {
                 topic:v.topic, description:v.description, type:v.type,
                 options:v.options.slice(), votes:Object.assign({},v.votes),
-                totalCast:v.totalCast, totalVoters:voterCount
+                totalCast:v.totalCast, totalVoters:voterCount, notVoted:notVoted
             };
             // Determine outcome
             if(v.type === "yes-no"){
@@ -549,7 +604,65 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             el.inpCustom.value = "";
             document.querySelector('input[name="vtype"][value="yes-no"]').checked = true;
             el.customOpts.classList.add("hidden");
+            el.chkVoteTimer.checked = timerEnabled;
+            el.resultNotVoted.classList.add("hidden");
             currentVote = null;
+        }
+
+        // ---- Timer ----
+        function startTimer(){
+            stopTimer();
+            if(!currentVote || !currentVote.timerEnabled) {
+                timerSecondsLeft = 0;
+                el.timerArea.classList.add("hidden");
+                return;
+            }
+            timerSecondsLeft = currentVote.timerSeconds;
+            el.timerArea.classList.remove("hidden");
+            updateTimerDisplay();
+            timerInterval = setInterval(function(){
+                timerSecondsLeft--;
+                if(timerSecondsLeft <= 0){
+                    timerSecondsLeft = 0;
+                    stopTimer();
+                    // Broadcast time-up to voters
+                    broadcast({ type:"timer-update", seconds:0 });
+                    if(currentVote){
+                        if(currentVote.totalCast > 0){
+                            closeVote();
+                        } else {
+                            // No votes cast - still close with zero result
+                            closeVote();
+                        }
+                    }
+                    return;
+                }
+                updateTimerDisplay();
+                // Send timer updates to voters every 5 seconds or in last 30 seconds
+                if(timerSecondsLeft <= 30 || timerSecondsLeft % 5 === 0){
+                    broadcast({ type:"timer-update", seconds:timerSecondsLeft });
+                }
+            }, 1000);
+        }
+
+        function stopTimer(){
+            if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+        }
+
+        function updateTimerDisplay(){
+            var m = Math.floor(timerSecondsLeft / 60);
+            var s = timerSecondsLeft % 60;
+            var txt = (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+            el.lblTimer.textContent = txt;
+            el.lblTimer.className = "timer-countdown";
+            if(timerSecondsLeft <= 10) el.lblTimer.classList.add("danger");
+            else if(timerSecondsLeft <= 30) el.lblTimer.classList.add("warning");
+        }
+
+        function formatTime(sec){
+            var m = Math.floor(sec / 60);
+            var s = sec % 60;
+            return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
         }
 
         function showActiveVote(){
@@ -619,6 +732,13 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 html += '<div class="result-bar-group"><div class="result-bar-label"><span>'+esc(opt)+'</span><span>'+count+' ('+Math.round(pct)+'%)</span></div><div class="result-bar-track"><div class="result-bar-fill '+barCls(opt,result.type)+'" style="width:'+pct+'%"></div></div></div>';
             });
             el.resultBars.innerHTML = html;
+            // Show not-voted count
+            if(result.notVoted > 0){
+                el.resultNotVoted.textContent = "Nicht abgestimmt: " + result.notVoted + " von " + result.totalVoters;
+                el.resultNotVoted.classList.remove("hidden");
+            } else {
+                el.resultNotVoted.classList.add("hidden");
+            }
             el.resultSummary.className = "result-summary";
             if(result.outcome==="accepted"){ el.resultSummary.textContent="Antrag ANGENOMMEN"; el.resultSummary.classList.add("accepted"); }
             else if(result.outcome==="rejected"){ el.resultSummary.textContent="Antrag ABGELEHNT"; el.resultSummary.classList.add("rejected"); }
@@ -635,7 +755,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 else if(item.outcome==="rejected"){rc="rejected";rt="Abgelehnt";}
                 else if(item.outcome==="tie"){rc="neutral";rt="Gleichstand";}
                 else{rc="accepted";rt=item.winner||"Gewinner";}
-                var d=item.options.map(function(o){return o+": "+item.votes[o]}).join(" | ")+" (Gesamt: "+item.totalCast+"/"+item.totalVoters+")";
+                var d=item.options.map(function(o){return o+": "+item.votes[o]}).join(" | ")+" (Gesamt: "+item.totalCast+"/"+item.totalVoters+(item.notVoted>0?" · Nicht abgestimmt: "+item.notVoted:"")+")";
                 html+='<div class="history-item"><span class="history-topic">'+(i+1)+'. '+esc(item.topic)+'</span><span class="history-result '+rc+'">'+rt+'</span><div class="history-details">'+esc(d)+'</div></div>';
             });
             el.historyList.innerHTML = html;
@@ -695,6 +815,9 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             } catch(e){}
         }
 
+        var voterTimerInterval = null;
+        var voterSecondsLeft = 0;
+
         var peer = new Peer();
         var conn = null;
         var hasVoted = false;
@@ -736,16 +859,23 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     markVoted(currentRoundId);
                     showScreen("v-confirmed");
                 }
+                if(data.type === "timer-update"){
+                    voterSecondsLeft = data.seconds;
+                    updateVoterTimer();
+                }
                 if(data.type === "vote-closed"){
+                    stopVoterTimer();
                     showVoteResult(data.result);
                 }
                 if(data.type === "vote-cancelled"){
+                    stopVoterTimer();
                     hasVoted = false;
                     clearVoted(currentRoundId);
                     currentRoundId = null;
                     showScreen("v-waiting");
                 }
                 if(data.type === "session-ended"){
+                    stopVoterTimer();
                     showScreen("v-ended");
                     if(peer) peer.destroy();
                 }
@@ -766,11 +896,54 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             showScreen("v-error");
         });
 
+        function startVoterTimer(seconds){
+            stopVoterTimer();
+            var timerEl = document.getElementById("v-timer");
+            if(!seconds || seconds <= 0){
+                timerEl.classList.add("hidden");
+                return;
+            }
+            voterSecondsLeft = seconds;
+            timerEl.classList.remove("hidden");
+            updateVoterTimer();
+            voterTimerInterval = setInterval(function(){
+                voterSecondsLeft--;
+                if(voterSecondsLeft <= 0){
+                    voterSecondsLeft = 0;
+                    stopVoterTimer();
+                }
+                updateVoterTimer();
+            }, 1000);
+        }
+
+        function stopVoterTimer(){
+            if(voterTimerInterval){ clearInterval(voterTimerInterval); voterTimerInterval = null; }
+        }
+
+        function updateVoterTimer(){
+            var timerEl = document.getElementById("v-timer");
+            var m = Math.floor(voterSecondsLeft / 60);
+            var s = voterSecondsLeft % 60;
+            timerEl.textContent = (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+            timerEl.className = "voter-timer";
+            if(voterSecondsLeft <= 0){
+                timerEl.textContent = "Zeit abgelaufen!";
+                timerEl.classList.add("danger");
+            } else if(voterSecondsLeft <= 10){
+                timerEl.classList.add("danger");
+            } else if(voterSecondsLeft <= 30){
+                timerEl.classList.add("warning");
+            }
+        }
+
         function showVoting(data){
             document.getElementById("v-topic").textContent = data.topic;
             var descEl = document.getElementById("v-desc");
             descEl.textContent = data.description || "";
             descEl.style.display = data.description ? "block" : "none";
+
+            // Start voter timer if provided
+            startVoterTimer(data.timerSeconds || 0);
 
             var container = document.getElementById("v-options");
             container.innerHTML = "";
