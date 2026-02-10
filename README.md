@@ -21,11 +21,16 @@ Gehostet auf GitHub Pages: **https://afielen.github.io/drk/index.html**
 - **Konfigurierbares Zeitlimit** -- einstellbar pro Versammlung, pro Abstimmung ein-/ausschaltbar
 - **Doppelabstimmungs-Schutz** -- mehrstufig (Browser-Fingerprinting, localStorage, Presenter-Pruefung)
 - **Zwei Abstimmungsmodi** -- Offener Modus und Stimmkarten-Modus (Token-basiert)
-- **PDF-Protokoll-Export** -- automatisch generiertes Abstimmungsprotokoll mit Zeitstempeln (jsPDF)
+- **PDF-Protokoll-Export** -- professionell gestaltetes Protokoll mit DRK-Branding, farbigen Ergebnisbalken und Seitenzahlen (jsPDF)
+- **Automatische Reconnect-Logik** -- bei Verbindungsabbruch verbinden sich Teilnehmer-Geraete automatisch neu (Exponential Backoff, bis zu 5 Versuche)
+- **Heartbeat/Keep-Alive** -- kontinuierliche Verbindungsueberwachung zwischen Teilnehmern und Versammlungsleiter
+- **Bestaetigungsdialog** -- Sicherheitsabfrage vor dem Beenden einer Versammlung mit optionalem PDF-Export
+- **Tab-Schutz** -- Warnung beim versehentlichen Schliessen des Browsers waehrend einer aktiven Versammlung
 - **Abstimmungshistorie** -- alle Ergebnisse der Versammlung auf einen Blick
 - **Danke-Seite** -- nach Versammlungsende mit Statistik-Uebersicht
 - **Keine Installation noetig** -- laeuft komplett im Browser
 - **Kein Server noetig** -- Peer-to-Peer-Kommunikation via WebRTC (PeerJS)
+- **Kryptografisch sichere Session-IDs** -- Peer-IDs werden mit `crypto.getRandomValues()` erzeugt (16 Zeichen, 2^64 Moeglichkeiten)
 - **Lokal gehostete Schriftarten** -- kein Laden von Google Fonts, DSGVO-konform
 
 ## Datenschutz und Anonymitaet
@@ -88,20 +93,25 @@ Im Stimmkarten-Modus werden ein oder mehrere Geraete (Tablets/Smartphones) berei
 
 Nach Abschluss der Versammlung kann ein PDF-Protokoll heruntergeladen werden. Das Protokoll enthaelt:
 
+- Roter DRK-Kopfbalken mit "DEUTSCHES ROTES KREUZ"-Schriftzug
 - Versammlungstitel, Datum und Modus
 - Alle Abstimmungen mit Thema, Zeitraum und Ergebnissen
-- Visuelle Balkendiagramme
-- Zusammenfassung (Angenommen/Abgelehnt/Gleichstand)
+- Farbige Ergebnisbalken (Gruen fuer Ja, Rot fuer Nein, Grau fuer Enthaltung)
+- Farbige Zusammenfassung pro Abstimmung (Angenommen/Abgelehnt/Gleichstand)
+- Seitenzahlen auf jeder Seite
 
-Der Export ist auch waehrend der Versammlung ueber den Button "Ergebnisse als PDF exportieren" in der Abstimmungshistorie moeglich.
+Der Export ist auch waehrend der Versammlung ueber den Button "Ergebnisse als PDF exportieren" in der Abstimmungshistorie moeglich. Beim Beenden der Versammlung wird ein Bestaetigungsdialog angezeigt, der ebenfalls den PDF-Export anbietet.
 
 ## Technik
 
 - **Einzelne HTML-Datei** -- kein Build-Prozess noetig
 - **PeerJS** (WebRTC) fuer serverlose Echtzeit-Kommunikation
-- **jsPDF** (v2.5.1) fuer PDF-Protokoll-Export
+- **jsPDF** (v2.5.1) fuer PDF-Protokoll-Export mit DRK-Branding
 - **QR-Code-Generator** (qrcode-generator v1.4.4) direkt eingebettet
 - **Browser-Fingerprinting** (Canvas, WebGL, Audio, Schriftarten, Hardware) zur Verhinderung von Mehrfachabstimmungen
+- **Kryptografisch sichere IDs** -- `crypto.getRandomValues()` fuer Peer-IDs und Session-Tokens (Fallback auf Math.random)
+- **Automatische Reconnect-Logik** -- Exponential Backoff (0s, 2s, 5s, 10s, 20s), Visibility-Change-Detection, Heartbeat/Keep-Alive (15s Intervall)
+- **Peer-ID-Kollisionsschutz** -- bis zu 3 automatische Retries bei ID-Kollision auf dem PeerJS-Server
 - **Lokal gehostete Schriftarten** (Source Sans 3, Source Serif 4) -- kein Google Fonts
 - Optimiert fuer **Chrome** (QR-Code-Darstellung in Edge eingeschraenkt)
 
@@ -114,6 +124,16 @@ Die App verwendet ein mehrstufiges System, um Mehrfachabstimmungen zu verhindern
 3. **Presenter-seitige Pruefung** -- Der Versammlungsleiter-Rechner fuehrt eine eigene Liste aller bereits abgegebenen Stimmen.
 
 **Wichtig:** Ein komplett anderer Browser (z.B. Chrome vs. Firefox) oder ein anderes Geraet erzeugt einen anderen Fingerprint -- das ist gewollt, da in diesem Fall von einer anderen Person ausgegangen wird.
+
+## Verbindungsstabilitaet
+
+Die App enthaelt eine umfangreiche Reconnect-Logik, die Verbindungsabbrueche automatisch behandelt:
+
+1. **Automatische Wiederverbindung** -- Bei Verbindungsverlust startet das Teilnehmer-Geraet automatisch bis zu 5 Reconnect-Versuche mit steigenden Wartezeiten (0s, 2s, 5s, 10s, 20s).
+2. **Heartbeat/Keep-Alive** -- Alle 15 Sekunden wird ein Ping/Pong zwischen Teilnehmer und Versammlungsleiter ausgetauscht. Stumme Verbindungsabbrueche werden so zuverlaessig erkannt.
+3. **Visibility-Change-Detection** -- Wenn ein Teilnehmer den Browser-Tab wechselt oder das Smartphone sperrt und zurueckkehrt, wird die Verbindung sofort geprueft und bei Bedarf neu aufgebaut.
+4. **Host-seitige Erkennung** -- Der Versammlungsleiter sieht in Echtzeit, wie viele Teilnehmer verbunden sind und wie viele sich gerade neu verbinden. Peers, die laenger als 60 Sekunden getrennt sind, werden automatisch bereinigt.
+5. **Manueller Retry** -- Falls die automatische Wiederverbindung fehlschlaegt, kann der Teilnehmer ueber einen Button manuell einen neuen Versuch starten oder den QR-Code erneut scannen.
 
 ## Projektstruktur
 
