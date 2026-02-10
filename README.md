@@ -31,7 +31,7 @@ Digitales Abstimmungssystem für Vereinssitzungen des Deutschen Roten Kreuzes. E
 
 ## Demo
 
-Gehostet auf GitHub Pages: **https://afielen.github.io/test/index.html**
+Gehostet auf GitHub Pages: **https://afielen.github.io/drk/index.html**
 
 ## Nutzung
 
