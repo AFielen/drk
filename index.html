@@ -254,7 +254,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             <input type="number" id="inp-voters" min="1" value="10">
         </div>
         <div class="mode-select">
-            <label>Abstimmungsmodus: <span class="help-popover-wrap"><span class="help-icon" id="help-mode-btn" role="button" aria-label="Hilfe">?</span><div class="help-popover" id="help-mode-pop"><button class="help-popover-close" id="help-mode-close" type="button" aria-label="Schliessen">&times;</button><h4>Offener Modus</h4><p>Jedes stimmberechtigte Mitglied scannt den QR-Code mit dem eigenen Smartphone und stimmt direkt ab. Alle stimmen gleichzeitig ab -- ideal fuer groessere Versammlungen.</p><h4>Stimmkarten-Modus</h4><p>Es werden ein bis fuenf Geraete bereitgestellt und bei der Abstimmung durchgereicht. Jeder Stimmberechtigte erhaelt vorab einen einmaligen Code auf einer Stimmkarte. Hoechste Sicherheit, da ein physischer Code erforderlich ist.</p></div></span></label>
+            <label>Abstimmungsmodus: <span class="help-popover-wrap"><span class="help-icon" id="help-mode-btn" role="button" aria-label="Hilfe">?</span><div class="help-popover" id="help-mode-pop"><button class="help-popover-close" id="help-mode-close" type="button" aria-label="Schließen">&times;</button><h4>Offener Modus</h4><p>Jedes stimmberechtigte Mitglied scannt den QR-Code mit dem eigenen Smartphone und stimmt direkt ab. Alle stimmen gleichzeitig ab – ideal für größere Versammlungen.</p><h4>Stimmkarten-Modus</h4><p>Es werden ein bis fünf Geräte bereitgestellt und bei der Abstimmung durchgereicht. Jeder Stimmberechtigte erhält vorab einen einmaligen Code auf einer Stimmkarte. Höchste Sicherheit, da ein physischer Code erforderlich ist.</p></div></span></label>
             <div class="mode-cards">
                 <label class="mode-card active" id="mc-open">
                     <input type="radio" name="session-mode" value="open" checked>
@@ -264,7 +264,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 <label class="mode-card" id="mc-stimmkarten">
                     <input type="radio" name="session-mode" value="stimmkarten">
                     <h4>Stimmkarten-Modus</h4>
-                    <p>Bereitgestellte Geraete mit persoenlichen Stimmkarten-Codes</p>
+                    <p>Bereitgestellte Geräte mit persönlichen Stimmkarten-Codes</p>
                 </label>
             </div>
         </div>
@@ -348,7 +348,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                         <div class="timer-label">Verbleibende Zeit</div>
                     </div>
                     <div class="connected-count" id="connected-count-wrap"><span id="lbl-connected">0</span> <span id="lbl-connected-label">Teilnehmer verbunden</span></div>
-                    <div class="sk-device-count hidden" id="sk-device-info"><strong><span id="lbl-sk-devices">0</span></strong> Stimmkarten-Geraete verbunden</div>
+                    <div class="sk-device-count hidden" id="sk-device-info"><strong><span id="lbl-sk-devices">0</span></strong> Stimmkarten-Geräte verbunden</div>
                     <div class="vote-progress-info">
                         <strong><span id="lbl-cast">0</span></strong> von <strong><span id="lbl-total">0</span></strong> <span id="lbl-progress-label">Stimmen</span>
                         <div class="progress-bar"><div class="progress-fill" id="bar-progress"></div></div>
@@ -384,16 +384,20 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 </main>
 </div>
 
-<!-- PDF Export Modal -->
-<div id="pdf-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:none;align-items:center;justify-content:center">
-    <div style="background:#fff;border-radius:12px;padding:2rem;max-width:420px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.2)">
-        <div style="font-size:2.5rem;margin-bottom:.75rem">&#128196;</div>
-        <h3 style="margin-bottom:.5rem;font-size:1.2rem">Ergebnisse sichern?</h3>
-        <p style="color:#666;font-size:.95rem;margin-bottom:1.5rem;line-height:1.6">Die Versammlung wird beendet und alle Daten gehen verloren. M&ouml;chten Sie vorher ein PDF-Protokoll herunterladen?</p>
-        <div style="display:flex;flex-direction:column;gap:.75rem">
-            <button id="pdf-modal-download" style="padding:.85rem 1.5rem;background:#e30613;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer">PDF herunterladen &amp; beenden</button>
-            <button id="pdf-modal-skip" style="padding:.75rem 1.5rem;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:.95rem;cursor:pointer">Ohne PDF beenden</button>
-            <button id="pdf-modal-cancel" style="padding:.5rem;background:none;border:none;color:#999;font-size:.85rem;cursor:pointer;text-decoration:underline">Abbrechen</button>
+<!-- End Session Confirmation Modal -->
+<div id="end-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+    <div id="end-modal-box" style="background:#fff;border-radius:12px;padding:2rem;max-width:440px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+        <h3 style="margin-bottom:.5rem;font-size:1.2rem;text-align:center">Versammlung beenden?</h3>
+        <p style="color:#666;font-size:.95rem;margin-bottom:1rem;line-height:1.6;text-align:center">M&ouml;chten Sie die Versammlung wirklich beenden? Alle Verbindungen zu den Teilnehmern werden getrennt.</p>
+        <div id="end-modal-pdf-hint" style="display:none;background:#fef3e0;border-radius:8px;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.9rem;color:#795548;line-height:1.5;text-align:center">
+            &#128161; Tipp: Sichern Sie zuerst die Ergebnisse als PDF, bevor Sie die Versammlung beenden.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.65rem">
+            <button id="end-modal-pdf" style="display:none;padding:.7rem 1rem;background:#fff;color:#e30613;border:2px solid #e30613;border-radius:8px;font-size:.95rem;font-weight:500;cursor:pointer">&#128196; Ergebnisse als PDF exportieren</button>
+            <div style="display:flex;gap:.65rem">
+                <button id="end-modal-cancel" style="flex:1;padding:.8rem 1rem;background:#f0f0f0;color:#333;border:none;border-radius:8px;font-size:.95rem;cursor:pointer">Abbrechen</button>
+                <button id="end-modal-confirm" style="flex:1;padding:.8rem 1rem;background:#e30613;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer">Versammlung beenden</button>
+            </div>
         </div>
     </div>
 </div>
@@ -436,7 +440,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
     <!-- Stimmkarten-specific screens -->
     <div id="v-sk-waiting" class="screen" style="display:none">
         <div class="state-title" style="font-size:1.5rem">Bitte warten</div>
-        <div class="state-sub" style="font-size:1.1rem">Die naechste Abstimmung wird vorbereitet.</div>
+        <div class="state-sub" style="font-size:1.1rem">Die nächste Abstimmung wird vorbereitet.</div>
         <div class="spinner" style="margin-top:.75rem"></div>
     </div>
     <div id="v-sk-code" class="screen" style="display:none">
@@ -551,45 +555,45 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             var vc = $("vote-info-content");
             if(sessionMode === "stimmkarten"){
                 wc.innerHTML = '<h3>Willkommen beim digitalen Abstimmungssystem</h3>'
-                    + '<p>Mit diesem Tool koennen Sie Abstimmungen in Ihrer Versammlung im Stimmkarten-Modus durchfuehren. So funktioniert es:</p>'
+                    + '<p>Mit diesem Tool können Sie Abstimmungen in Ihrer Versammlung im Stimmkarten-Modus durchführen. So funktioniert es:</p>'
                     + '<ul>'
-                    + '<li>Richten Sie unten Ihre Versammlung ein und waehlen Sie den <strong>Stimmkarten-Modus</strong>.</li>'
-                    + '<li>Generieren Sie <strong>Token-Codes</strong> fuer alle Stimmberechtigten und drucken Sie diese aus.</li>'
+                    + '<li>Richten Sie unten Ihre Versammlung ein und wählen Sie den <strong>Stimmkarten-Modus</strong>.</li>'
+                    + '<li>Generieren Sie <strong>Token-Codes</strong> für alle Stimmberechtigten und drucken Sie diese aus.</li>'
                     + '<li>Verteilen Sie die ausgedruckten Codes an die Mitglieder.</li>'
-                    + '<li>Verbinden Sie ein oder mehrere <strong>Abstimmungsgeraete</strong> (Tablets/Smartphones) per QR-Code.</li>'
-                    + '<li>Die Mitglieder geben ihren Code am Geraet ein und stimmen ab -- das Geraet wird danach automatisch fuer die naechste Person zurueckgesetzt.</li>'
+                    + '<li>Verbinden Sie ein oder mehrere <strong>Abstimmungsgeräte</strong> (Tablets/Smartphones) per QR-Code.</li>'
+                    + '<li>Die Mitglieder geben ihren Code am Gerät ein und stimmen ab – das Gerät wird danach automatisch für die nächste Person zurückgesetzt.</li>'
                     + '</ul>'
-                    + '<p style="margin-top:.5rem">Jeder Code kann pro Abstimmungsrunde <strong>nur einmal</strong> verwendet werden. Alle Stimmen bleiben <strong>anonym</strong> -- es ist nicht nachvollziehbar, welcher Code wie abgestimmt hat.</p>';
+                    + '<p style="margin-top:.5rem">Jeder Code kann pro Abstimmungsrunde <strong>nur einmal</strong> verwendet werden. Alle Stimmen bleiben <strong>anonym</strong> – es ist nicht nachvollziehbar, welcher Code wie abgestimmt hat.</p>';
                 vc.innerHTML = '<h3>So funktioniert die Abstimmung (Stimmkarten-Modus)</h3>'
                     + '<ul>'
                     + '<li>Geben Sie oben das <strong>Thema</strong> und optional eine Beschreibung ein.</li>'
-                    + '<li>Waehlen Sie die <strong>Abstimmungsart</strong>: Ja/Nein/Enthaltung oder eigene Optionen.</li>'
-                    + '<li>Optional: Aktivieren Sie ein <strong>Zeitlimit</strong> -- nach Ablauf wird die Abstimmung automatisch geschlossen.</li>'
-                    + '<li>Nach dem Start erscheint auf den Stimmkarten-Geraeten die <strong>Code-Eingabe</strong>. Die Mitglieder geben ihren Token-Code ein und stimmen ab.</li>'
-                    + '<li>Der Fortschritt zeigt an, wie viele <strong>Codes eingeloest</strong> wurden.</li>'
-                    + '<li>Sie koennen die Abstimmung jederzeit manuell schliessen oder warten, bis alle abgestimmt haben bzw. das Zeitlimit ablaeuft.</li>'
+                    + '<li>Wählen Sie die <strong>Abstimmungsart</strong>: Ja/Nein/Enthaltung oder eigene Optionen.</li>'
+                    + '<li>Optional: Aktivieren Sie ein <strong>Zeitlimit</strong> – nach Ablauf wird die Abstimmung automatisch geschlossen.</li>'
+                    + '<li>Nach dem Start erscheint auf den Stimmkarten-Geräten die <strong>Code-Eingabe</strong>. Die Mitglieder geben ihren Token-Code ein und stimmen ab.</li>'
+                    + '<li>Der Fortschritt zeigt an, wie viele <strong>Codes eingelöst</strong> wurden.</li>'
+                    + '<li>Sie können die Abstimmung jederzeit manuell schließen oder warten, bis alle abgestimmt haben bzw. das Zeitlimit abläuft.</li>'
                     + '</ul>'
-                    + '<p style="margin-top:.5rem">Jeder Token-Code ist pro Runde <strong>einmalig</strong> verwendbar. In der naechsten Abstimmungsrunde kann derselbe Code erneut genutzt werden.</p>';
+                    + '<p style="margin-top:.5rem">Jeder Token-Code ist pro Runde <strong>einmalig</strong> verwendbar. In der nächsten Abstimmungsrunde kann derselbe Code erneut genutzt werden.</p>';
             } else {
                 wc.innerHTML = '<h3>Willkommen beim digitalen Abstimmungssystem</h3>'
-                    + '<p>Mit diesem Tool koennen Sie Abstimmungen in Ihrer Versammlung schnell und einfach digital durchfuehren. So funktioniert es:</p>'
+                    + '<p>Mit diesem Tool können Sie Abstimmungen in Ihrer Versammlung schnell und einfach digital durchführen. So funktioniert es:</p>'
                     + '<ul>'
                     + '<li>Richten Sie unten Ihre Versammlung ein und starten Sie diese.</li>'
-                    + '<li>Fuer jede Abstimmung wird ein <strong>QR-Code</strong> auf dem Bildschirm angezeigt.</li>'
+                    + '<li>Für jede Abstimmung wird ein <strong>QR-Code</strong> auf dem Bildschirm angezeigt.</li>'
                     + '<li>Die Mitglieder scannen den QR-Code mit dem Smartphone und stimmen direkt ab.</li>'
                     + '<li>Das Ergebnis erscheint in <strong>Echtzeit</strong> auf dem Bildschirm.</li>'
                     + '</ul>'
-                    + '<p style="margin-top:.5rem">Alle Stimmen werden <strong>vollstaendig anonym</strong> abgegeben. Es werden keine persoenlichen Daten gespeichert und keine Stimme kann einer Person zugeordnet werden. Die Kommunikation laeuft direkt zwischen den Geraeten -- ohne Server, ohne Datenbank.</p>';
+                    + '<p style="margin-top:.5rem">Alle Stimmen werden <strong>vollständig anonym</strong> abgegeben. Es werden keine persönlichen Daten gespeichert und keine Stimme kann einer Person zugeordnet werden. Die Kommunikation läuft direkt zwischen den Geräten – ohne Server, ohne Datenbank.</p>';
                 vc.innerHTML = '<h3>So funktioniert die Abstimmung</h3>'
                     + '<ul>'
                     + '<li>Geben Sie oben das <strong>Thema</strong> und optional eine Beschreibung ein.</li>'
-                    + '<li>Waehlen Sie die <strong>Abstimmungsart</strong>: Ja/Nein/Enthaltung oder eigene Optionen.</li>'
-                    + '<li>Optional: Aktivieren Sie ein <strong>Zeitlimit</strong> -- nach Ablauf wird die Abstimmung automatisch geschlossen.</li>'
+                    + '<li>Wählen Sie die <strong>Abstimmungsart</strong>: Ja/Nein/Enthaltung oder eigene Optionen.</li>'
+                    + '<li>Optional: Aktivieren Sie ein <strong>Zeitlimit</strong> – nach Ablauf wird die Abstimmung automatisch geschlossen.</li>'
                     + '<li>Nach dem Start erscheint ein <strong>QR-Code</strong> auf dem Bildschirm. Die Mitglieder scannen diesen mit dem Smartphone und geben ihre Stimme ab.</li>'
                     + '<li>Die Ergebnisse werden <strong>live</strong> auf dem Bildschirm aktualisiert.</li>'
-                    + '<li>Sie koennen die Abstimmung jederzeit manuell schliessen oder warten, bis alle abgestimmt haben bzw. das Zeitlimit ablaeuft.</li>'
+                    + '<li>Sie können die Abstimmung jederzeit manuell schließen oder warten, bis alle abgestimmt haben bzw. das Zeitlimit abläuft.</li>'
                     + '</ul>'
-                    + '<p style="margin-top:.5rem">Jede Stimme ist <strong>anonym</strong> -- es ist nicht erkennbar, wer wie abgestimmt hat. Jedes Geraet kann pro Abstimmungsrunde nur einmal abstimmen.</p>';
+                    + '<p style="margin-top:.5rem">Jede Stimme ist <strong>anonym</strong> – es ist nicht erkennbar, wer wie abgestimmt hat. Jedes Gerät kann pro Abstimmungsrunde nur einmal abstimmen.</p>';
             }
         }
         // Initialize info boxes with default mode
@@ -680,12 +684,13 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             voterCount = parseInt(el.inpVoters.value, 10);
             sessionMode = document.querySelector('input[name="session-mode"]:checked').value;
             if(!sessionTitle){ alert("Bitte Versammlungstitel eingeben."); return; }
-            if(!voterCount || voterCount < 1){ alert("Bitte gueltige Anzahl eingeben."); return; }
+            if(!voterCount || voterCount < 1){ alert("Bitte gültige Anzahl eingeben."); return; }
             if(sessionMode === "stimmkarten" && generatedCodes.length === 0){
                 alert("Bitte zuerst Token-Codes generieren."); return;
             }
 
             history = [];
+            versammlungAktiv = true;
             el.lblTitle.textContent = sessionTitle;
             el.lblVoters.textContent = voterCount + " Stimmberechtigte";
             el.welcomeInfo.classList.add("hidden");
@@ -822,7 +827,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         function updateConnectedCount(){
             el.lblConnected.textContent = connections.size;
             if(sessionMode === "stimmkarten"){
-                el.lblConnectedLabel.textContent = "Stimmkarten-Geraete verbunden";
+                el.lblConnectedLabel.textContent = "Stimmkarten-Geräte verbunden";
                 el.skDeviceInfo.classList.remove("hidden");
                 el.lblSkDevices.textContent = connections.size;
             } else {
@@ -1059,16 +1064,15 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         });
 
         // ---- End session ----
-        function doEndSession(downloadPdf){
+        var versammlungAktiv = false;
+
+        function doEndSession(){
             stopTimer();
             // If there's an active vote, close it first
             if(currentVote){
                 closeVote();
             }
             var historySnapshot = history.map(function(h){ return Object.assign({}, h); });
-            if(downloadPdf){
-                generatePdf(historySnapshot);
-            }
             // Collect stats for danke page
             var totalStimmen = 0;
             historySnapshot.forEach(function(h){ totalStimmen += h.totalCast; });
@@ -1084,32 +1088,65 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             history = [];
             tokenCodes = {};
             generatedCodes = [];
-            // Short delay to let PDF download start
-            setTimeout(function(){ window.location.href = dankeUrl; }, downloadPdf ? 500 : 0);
+            // Disable beforeunload before redirect
+            versammlungAktiv = false;
+            window.location.href = dankeUrl;
+        }
+
+        function showEndModal(){
+            var overlay = $("end-modal-overlay");
+            var pdfHint = $("end-modal-pdf-hint");
+            var pdfBtn = $("end-modal-pdf");
+            var hasHistory = history.length > 0 || currentVote;
+            pdfHint.style.display = hasHistory ? "" : "none";
+            pdfBtn.style.display = hasHistory ? "" : "none";
+            overlay.style.display = "flex";
+        }
+
+        function hideEndModal(){
+            $("end-modal-overlay").style.display = "none";
         }
 
         el.btnEndSession.addEventListener("click", function(){
-            // If there are votes in history, show modal
-            if(history.length > 0 || currentVote){
-                var overlay = $("pdf-modal-overlay");
-                overlay.style.display = "flex";
-            } else {
-                if(!confirm("Versammlung wirklich beenden?")) return;
-                doEndSession(false);
+            showEndModal();
+        });
+
+        // End modal buttons
+        $("end-modal-confirm").addEventListener("click", function(){
+            hideEndModal();
+            doEndSession();
+        });
+        $("end-modal-cancel").addEventListener("click", function(){
+            hideEndModal();
+        });
+        $("end-modal-pdf").addEventListener("click", function(){
+            // Export PDF but keep dialog open
+            if(currentVote){
+                // Close active vote first so it's in the export
+                closeVote();
+            }
+            var historySnapshot = history.map(function(h){ return Object.assign({}, h); });
+            if(historySnapshot.length > 0){
+                generatePdf(historySnapshot);
+            }
+        });
+        // Close on overlay click (not on dialog box)
+        $("end-modal-overlay").addEventListener("click", function(e){
+            if(e.target === this) hideEndModal();
+        });
+        // Close on Escape
+        document.addEventListener("keydown", function(e){
+            if(e.key === "Escape" && $("end-modal-overlay").style.display === "flex"){
+                hideEndModal();
             }
         });
 
-        // PDF modal buttons
-        $("pdf-modal-download").addEventListener("click", function(){
-            $("pdf-modal-overlay").style.display = "none";
-            doEndSession(true);
-        });
-        $("pdf-modal-skip").addEventListener("click", function(){
-            $("pdf-modal-overlay").style.display = "none";
-            doEndSession(false);
-        });
-        $("pdf-modal-cancel").addEventListener("click", function(){
-            $("pdf-modal-overlay").style.display = "none";
+        // ---- beforeunload warning ----
+        window.addEventListener("beforeunload", function(e){
+            if(versammlungAktiv){
+                e.preventDefault();
+                return "";
+            }
         });
 
         // ---- Start vote ----
@@ -1270,7 +1307,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             el.lblVoteTopic.textContent = currentVote.topic;
             el.lblVoteDesc.textContent = currentVote.description || "";
             el.lblTotal.textContent = voterCount;
-            $("lbl-progress-label").textContent = sessionMode === "stimmkarten" ? "Codes eingeloest" : "Stimmen";
+            $("lbl-progress-label").textContent = sessionMode === "stimmkarten" ? "Codes eingelöst" : "Stimmen";
 
             // QR code
             var baseUrl = window.location.origin + window.location.pathname;
@@ -1689,7 +1726,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             var inp = document.getElementById("vk-code-inp");
             var raw = inp.value.replace(/-/g, "").toUpperCase().trim();
             if(raw.length !== 6){
-                showSkMsg("Bitte vollstaendigen 6-stelligen Code eingeben.", "error");
+                showSkMsg("Bitte vollständigen 6-stelligen Code eingeben.", "error");
                 return;
             }
             var code = raw.substring(0,3) + "-" + raw.substring(3);
@@ -1745,9 +1782,9 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 showScreen("v-sk-vote");
             } else {
                 if(data.reason === "already_used"){
-                    showSkMsg("Dieser Code wurde bereits fuer diese Abstimmung verwendet.", "error");
+                    showSkMsg("Dieser Code wurde bereits für diese Abstimmung verwendet.", "error");
                 } else {
-                    showSkMsg("Code ungueltig. Bitte pruefen Sie Ihren Code.", "error");
+                    showSkMsg("Code ungültig. Bitte prüfen Sie Ihren Code.", "error");
                 }
             }
         }
@@ -1766,7 +1803,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 // Back to code entry with error
                 if(skVoteData) showSkCodeEntry(skVoteData);
                 if(data.reason === "already_used"){
-                    showSkMsg("Dieser Code wurde bereits fuer diese Abstimmung verwendet.", "error");
+                    showSkMsg("Dieser Code wurde bereits für diese Abstimmung verwendet.", "error");
                 } else {
                     showSkMsg("Fehler bei der Stimmabgabe.", "error");
                 }
