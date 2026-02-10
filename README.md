@@ -16,7 +16,7 @@ Digitales Abstimmungssystem für Vereinssitzungen des Deutschen Roten Kreuzes. E
 - **Echtzeit-Ergebnisse** mit Live-Balkendiagrammen
 - **Konfigurierbares Zeitlimit** -- einstellbar pro Versammlung (Standard: 5 Minuten), pro Abstimmung ein-/ausschaltbar
 - **Doppelabstimmungs-Schutz** -- jedes Geraet kann pro Runde nur einmal abstimmen
-- **Zwei Abstimmungsmodi** -- Offener Modus (eigenes Smartphone) und Kiosk-Modus (durchgereichte Geraete mit Token-Codes)
+- **Zwei Abstimmungsmodi** -- Offener Modus (eigenes Smartphone) und Stimmkarten-Modus (bereitgestellte Geraete mit persoenlichen Stimmkarten-Codes)
 - **Keine Installation noetig** -- laeuft komplett im Browser
 - **Kein Server noetig** -- Peer-to-Peer-Kommunikation via WebRTC (PeerJS)
 - **Abstimmungshistorie** -- alle Ergebnisse der Versammlung auf einen Blick
@@ -55,21 +55,21 @@ Gehostet auf GitHub Pages: **https://afielen.github.io/drk/index.html**
 3. Warten bis die Abstimmung gestartet wird
 4. Stimme abgeben -- fertig!
 
-### Kiosk-Modus (Token-basiert)
+### Stimmkarten-Modus (Token-basiert)
 
-Im Kiosk-Modus werden ein oder mehrere Geraete (Tablets/Smartphones) durchgereicht. Jedes Mitglied authentifiziert sich mit einem einmaligen Token-Code.
+Im Stimmkarten-Modus werden ein oder mehrere Geraete (Tablets/Smartphones) bereitgestellt. Jedes Mitglied authentifiziert sich mit einem persoenlichen Stimmkarten-Code.
 
 **Versammlungsleiter (Laptop/Beamer):**
 
 1. Seite im Browser oeffnen
 2. Versammlungstitel und Anzahl der Stimmberechtigten eingeben
-3. Modus "Kiosk-Modus" auswaehlen
+3. Modus "Stimmkarten-Modus" auswaehlen
 4. "Token-Codes generieren" klicken -- fuer jedes Mitglied wird ein 6-stelliger Code erzeugt (z.B. `K4F-9M2`)
 5. "Codes drucken" klicken -- druckbare Karten im Visitenkartenformat (3x4 pro A4-Seite), zum Ausschneiden und Verteilen
-6. Kiosk-Geraete ueber QR-Code verbinden
-7. Abstimmung starten -- auf den Kiosk-Geraeten erscheint die Code-Eingabe
+6. Stimmkarten-Geraete ueber QR-Code verbinden
+7. Abstimmung starten -- auf den Stimmkarten-Geraeten erscheint die Code-Eingabe
 
-**Mitglieder (am Kiosk-Geraet):**
+**Mitglieder (am Stimmkarten-Geraet):**
 
 1. 6-stelligen Code ueber das Touch-Numpad oder die Tastatur eingeben
 2. Nach Validierung: Stimme abgeben (Ja / Nein / Enthaltung oder eigene Optionen)
