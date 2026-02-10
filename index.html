@@ -155,6 +155,54 @@ input:focus,textarea:focus{outline:none;border-color:var(--drk);box-shadow:0 0 0
 
 footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
+/* === MODE SELECTION === */
+.mode-select{margin-bottom:1rem}
+.mode-select>label{font-weight:600;font-size:.9rem;display:block;margin-bottom:.35rem}
+.mode-cards{display:flex;gap:1rem;flex-wrap:wrap}
+.mode-card{flex:1;min-width:200px;border:2px solid var(--border);border-radius:var(--radius);padding:1rem;cursor:pointer;transition:border-color .2s,background .2s;text-align:center}
+.mode-card.active{border-color:var(--drk);background:#fef3f3}
+.mode-card h4{margin-bottom:.25rem;font-size:.95rem}
+.mode-card p{font-size:.8rem;color:var(--text-light);margin:0}
+.mode-card input[type=radio]{display:none}
+
+/* === KIOSK TOKEN === */
+.token-section{margin-top:1rem}
+.token-list{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
+.token-chip{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.4rem .75rem;font-family:"Courier New",monospace;font-size:1rem;font-weight:700;letter-spacing:.1em}
+.kiosk-device-count{font-size:.9rem;color:var(--text-light);margin-bottom:.5rem;padding:.5rem;background:var(--bg);border-radius:var(--radius)}
+.kiosk-device-count strong{color:var(--drk)}
+
+/* === KIOSK VOTER === */
+.kiosk-screen{width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:1.25rem;padding:1rem}
+.kiosk-code-input{width:100%;text-align:center}
+.kiosk-code-input input{width:100%;max-width:320px;font-size:2rem;font-family:"Courier New",monospace;font-weight:700;text-align:center;letter-spacing:.2em;padding:.75rem;border:3px solid var(--border);border-radius:var(--radius);text-transform:uppercase}
+.kiosk-code-input input:focus{border-color:var(--drk);box-shadow:0 0 0 4px rgba(227,6,19,.15)}
+.kiosk-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;width:100%;max-width:320px}
+.kiosk-numpad button{padding:1rem;font-size:1.3rem;font-weight:700;border:2px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;font-family:inherit;transition:background .15s,transform .1s}
+.kiosk-numpad button:active{transform:scale(.95);background:var(--bg)}
+.kiosk-numpad button.key-submit{background:var(--drk);color:var(--white);border-color:var(--drk)}
+.kiosk-numpad button.key-submit:active{background:var(--drk-dark)}
+.kiosk-numpad button.key-delete{background:var(--bg);color:var(--danger)}
+.kiosk-msg{width:100%;max-width:400px;padding:1rem;border-radius:var(--radius);text-align:center;font-weight:700;font-size:1.05rem}
+.kiosk-msg.error{background:#ffebee;color:var(--danger)}
+.kiosk-msg.success{background:#e8f5e9;color:var(--success)}
+
+/* === PRINT STYLES FOR TOKEN CARDS === */
+#print-tokens-area{display:none}
+@media print{
+    body>*:not(#print-tokens-area){display:none!important}
+    #print-tokens-area{display:block!important;padding:0;margin:0}
+    .print-page{page-break-after:always;padding:10mm}
+    .print-page:last-child{page-break-after:auto}
+    .print-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;width:100%}
+    .print-card{border:1px dashed #999;padding:8mm 5mm;text-align:center;break-inside:avoid;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55mm}
+    .print-card .pc-logo{font-size:1.2rem;font-weight:900;color:#e30613;margin-bottom:2mm}
+    .print-card .pc-label{font-size:.7rem;color:#666;margin-bottom:3mm}
+    .print-card .pc-code{font-size:1.8rem;font-weight:900;font-family:"Courier New",monospace;letter-spacing:.15em;color:#000}
+    .print-card .pc-footer{font-size:.6rem;color:#999;margin-top:3mm}
+    @page{margin:5mm}
+}
+
 @media(max-width:600px){
     header{padding:.75rem 1rem}
     .drk-logo h1{font-size:1.15rem}
@@ -200,6 +248,28 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         <div class="form-group">
             <label for="inp-voters">Anzahl Stimmberechtigte</label>
             <input type="number" id="inp-voters" min="1" value="10">
+        </div>
+        <div class="mode-select">
+            <label>Abstimmungsmodus:</label>
+            <div class="mode-cards">
+                <label class="mode-card active" id="mc-open">
+                    <input type="radio" name="session-mode" value="open" checked>
+                    <h4>Offener Modus</h4>
+                    <p>Jedes Mitglied stimmt mit dem eigenen Smartphone ab</p>
+                </label>
+                <label class="mode-card" id="mc-kiosk">
+                    <input type="radio" name="session-mode" value="kiosk">
+                    <h4>Kiosk-Modus</h4>
+                    <p>Durchgereichte Geraete mit Token-Codes zur Authentifizierung</p>
+                </label>
+            </div>
+        </div>
+        <div id="kiosk-token-setup" class="token-section hidden">
+            <button class="btn btn-secondary" id="btn-generate-tokens" type="button">Token-Codes generieren</button>
+            <div id="token-preview" class="hidden">
+                <div class="token-list" id="token-list"></div>
+                <button class="btn btn-secondary btn-sm" id="btn-print-tokens" type="button">Codes drucken</button>
+            </div>
         </div>
         <button class="btn btn-primary" id="btn-start-session">Versammlung starten</button>
     </section>
@@ -282,9 +352,10 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                         <div class="timer-countdown" id="lbl-timer">05:00</div>
                         <div class="timer-label">Verbleibende Zeit</div>
                     </div>
-                    <div class="connected-count"><span id="lbl-connected">0</span> Teilnehmer verbunden</div>
+                    <div class="connected-count" id="connected-count-wrap"><span id="lbl-connected">0</span> <span id="lbl-connected-label">Teilnehmer verbunden</span></div>
+                    <div class="kiosk-device-count hidden" id="kiosk-device-info"><strong><span id="lbl-kiosk-devices">0</span></strong> Abstimmungsgeraete verbunden</div>
                     <div class="vote-progress-info">
-                        <strong><span id="lbl-cast">0</span></strong> von <strong><span id="lbl-total">0</span></strong> Stimmen
+                        <strong><span id="lbl-cast">0</span></strong> von <strong><span id="lbl-total">0</span></strong> <span id="lbl-progress-label">Stimmen</span>
                         <div class="progress-bar"><div class="progress-fill" id="bar-progress"></div></div>
                     </div>
                     <div id="live-bars"></div>
@@ -352,10 +423,41 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
     <div id="v-error" class="screen" style="display:none">
         <div class="error-box" id="v-err-msg">Verbindung fehlgeschlagen.</div>
     </div>
+    <!-- Kiosk-specific screens -->
+    <div id="v-kiosk-waiting" class="screen" style="display:none">
+        <div class="state-title" style="font-size:1.5rem">Bitte warten</div>
+        <div class="state-sub" style="font-size:1.1rem">Die naechste Abstimmung wird vorbereitet.</div>
+        <div class="spinner" style="margin-top:.75rem"></div>
+    </div>
+    <div id="v-kiosk-code" class="screen" style="display:none">
+        <div class="kiosk-screen">
+            <div class="vote-topic" id="vk-topic" style="font-size:1.3rem"></div>
+            <div class="vote-desc" id="vk-desc"></div>
+            <div class="voter-timer hidden" id="vk-timer"></div>
+            <div class="kiosk-code-input">
+                <div style="font-weight:600;font-size:1rem;margin-bottom:.5rem">Ihren Code eingeben:</div>
+                <input type="text" id="vk-code-inp" maxlength="7" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="XXX-XXX">
+            </div>
+            <div class="kiosk-numpad" id="vk-numpad"></div>
+            <div id="vk-msg" class="kiosk-msg hidden"></div>
+        </div>
+    </div>
+    <div id="v-kiosk-vote" class="screen" style="display:none">
+        <div class="kiosk-screen">
+            <div class="vote-topic" id="vk-vote-topic" style="font-size:1.3rem"></div>
+            <div class="vote-options" id="vk-options"></div>
+        </div>
+    </div>
+    <div id="v-kiosk-confirmed" class="screen" style="display:none">
+        <div class="confirmed-icon">&#10003;</div>
+        <div class="state-title" style="font-size:1.5rem">Stimme abgegeben!</div>
+    </div>
 </main>
 </div>
 
 <footer>DRK Vereinsabstimmung &mdash; Deutsches Rotes Kreuz &middot; <a href="impressum.html" style="color:inherit;text-decoration:underline">Impressum</a></footer>
+
+<div id="print-tokens-area"></div>
 
 <script>
 (function(){
@@ -387,6 +489,10 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         var timerSecondsLeft = 0;
         var timerInterval = null;
 
+        var sessionMode = "open"; // "open" or "kiosk"
+        var tokenCodes = {}; // { code: { used: false, votedInRounds: [] } }
+        var generatedCodes = []; // array of code strings
+
         var $ = function(id){ return document.getElementById(id); };
         var el = {
             welcomeInfo: $("p-welcome-info"),
@@ -402,14 +508,86 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             btnCancelVote: $("btn-cancel-vote"), btnNextVote: $("btn-next-vote"),
             lblVoteTopic: $("lbl-vote-topic"), lblVoteDesc: $("lbl-vote-desc"),
             qrCanvas: $("qr-canvas"), lblVoteUrl: $("lbl-vote-url"),
-            lblConnected: $("lbl-connected"), lblCast: $("lbl-cast"), lblTotal: $("lbl-total"),
+            lblConnected: $("lbl-connected"), lblConnectedLabel: $("lbl-connected-label"),
+            lblCast: $("lbl-cast"), lblTotal: $("lbl-total"),
             barProgress: $("bar-progress"), liveBars: $("live-bars"),
             lblResultTopic: $("lbl-result-topic"), resultBars: $("result-bars"),
             resultNotVoted: $("result-not-voted"),
             resultSummary: $("result-summary"), historyList: $("history-list"),
             chkVoteTimer: $("chk-vote-timer"), inpVoteTimerMin: $("inp-vote-timer-min"),
             timerArea: $("p-timer-area"), lblTimer: $("lbl-timer"),
+            kioskTokenSetup: $("kiosk-token-setup"), btnGenerateTokens: $("btn-generate-tokens"),
+            tokenPreview: $("token-preview"), tokenList: $("token-list"),
+            btnPrintTokens: $("btn-print-tokens"),
+            kioskDeviceInfo: $("kiosk-device-info"), lblKioskDevices: $("lbl-kiosk-devices"),
         };
+
+        // ---- Mode selection ----
+        document.querySelectorAll('input[name="session-mode"]').forEach(function(r){
+            r.addEventListener("change", function(){
+                sessionMode = this.value;
+                document.querySelectorAll(".mode-card").forEach(function(c){c.classList.remove("active")});
+                this.closest(".mode-card").classList.add("active");
+                el.kioskTokenSetup.classList.toggle("hidden", sessionMode !== "kiosk");
+            });
+        });
+
+        // ---- Token generation ----
+        var TOKEN_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+        function generateToken(){
+            var code = "";
+            for(var i = 0; i < 6; i++){
+                if(i === 3) code += "-";
+                code += TOKEN_CHARS[Math.floor(Math.random() * TOKEN_CHARS.length)];
+            }
+            return code;
+        }
+
+        el.btnGenerateTokens.addEventListener("click", function(){
+            var count = parseInt(el.inpVoters.value, 10) || 10;
+            if(count < 1) count = 1;
+            var usedCodes = new Set();
+            generatedCodes = [];
+            tokenCodes = {};
+            for(var i = 0; i < count; i++){
+                var code;
+                do { code = generateToken(); } while(usedCodes.has(code));
+                usedCodes.add(code);
+                generatedCodes.push(code);
+                tokenCodes[code] = { votedInRounds: [] };
+            }
+            var html = "";
+            generatedCodes.forEach(function(c){ html += '<span class="token-chip">' + esc(c) + '</span>'; });
+            el.tokenList.innerHTML = html;
+            el.tokenPreview.classList.remove("hidden");
+        });
+
+        // ---- Print tokens ----
+        el.btnPrintTokens.addEventListener("click", function(){
+            var area = $("print-tokens-area");
+            var cardsPerPage = 12; // 3x4
+            var pages = Math.ceil(generatedCodes.length / cardsPerPage);
+            var html = "";
+            for(var p = 0; p < pages; p++){
+                html += '<div class="print-page"><div class="print-grid">';
+                for(var i = p * cardsPerPage; i < Math.min((p+1) * cardsPerPage, generatedCodes.length); i++){
+                    html += '<div class="print-card">';
+                    html += '<div class="pc-logo">&#10010; DRK</div>';
+                    html += '<div class="pc-label">Ihr Abstimmungscode:</div>';
+                    html += '<div class="pc-code">' + esc(generatedCodes[i]) + '</div>';
+                    html += '<div class="pc-footer">DRK Vereinsabstimmung</div>';
+                    html += '</div>';
+                }
+                // Fill remaining cells for even grid
+                var remainder = cardsPerPage - (generatedCodes.length - p * cardsPerPage);
+                if(remainder > 0 && remainder < cardsPerPage){
+                    for(var j = 0; j < remainder; j++) html += '<div class="print-card" style="border:none"></div>';
+                }
+                html += '</div></div>';
+            }
+            area.innerHTML = html;
+            setTimeout(function(){ window.print(); }, 100);
+        });
 
         // Vote type toggle
         document.querySelectorAll('input[name="vtype"]').forEach(function(r){
@@ -422,8 +600,12 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         el.btnStartSession.addEventListener("click", function(){
             sessionTitle = el.inpTitle.value.trim();
             voterCount = parseInt(el.inpVoters.value, 10);
-            if(!sessionTitle){ alert("Bitte Sitzungstitel eingeben."); return; }
-            if(!voterCount || voterCount < 1){ alert("Bitte gültige Anzahl eingeben."); return; }
+            sessionMode = document.querySelector('input[name="session-mode"]:checked').value;
+            if(!sessionTitle){ alert("Bitte Versammlungstitel eingeben."); return; }
+            if(!voterCount || voterCount < 1){ alert("Bitte gueltige Anzahl eingeben."); return; }
+            if(sessionMode === "kiosk" && generatedCodes.length === 0){
+                alert("Bitte zuerst Token-Codes generieren."); return;
+            }
 
             history = [];
             el.lblTitle.textContent = sessionTitle;
@@ -470,7 +652,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             conn.on("open", function(){
                 connections.set(conn.peer, conn);
                 updateConnectedCount();
-                // Send current state immediately on connect
+                // Send current state immediately on connect, include mode
                 sendStateToConn(conn);
             });
 
@@ -482,7 +664,43 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     // Re-send state with device-aware already-voted check
                     sendStateToConn(conn);
                 }
-                if(data.type === "cast-vote" && currentVote){
+                // --- KIOSK: Token validation ---
+                if(data.type === "kiosk-validate" && currentVote && sessionMode === "kiosk"){
+                    var code = (data.code || "").toUpperCase().trim();
+                    if(!tokenCodes[code]){
+                        conn.send({ type:"kiosk-result", valid:false, reason:"invalid" });
+                        return;
+                    }
+                    if(tokenCodes[code].votedInRounds.indexOf(currentVote.roundId) !== -1){
+                        conn.send({ type:"kiosk-result", valid:false, reason:"already_used" });
+                        return;
+                    }
+                    conn.send({ type:"kiosk-result", valid:true, options:currentVote.options, voteType:currentVote.type, topic:currentVote.topic });
+                }
+                // --- KIOSK: Cast vote with token ---
+                if(data.type === "kiosk-cast-vote" && currentVote && sessionMode === "kiosk"){
+                    var kcode = (data.code || "").toUpperCase().trim();
+                    if(!tokenCodes[kcode]){
+                        conn.send({ type:"kiosk-vote-result", success:false, reason:"invalid" });
+                        return;
+                    }
+                    if(tokenCodes[kcode].votedInRounds.indexOf(currentVote.roundId) !== -1){
+                        conn.send({ type:"kiosk-vote-result", success:false, reason:"already_used" });
+                        return;
+                    }
+                    if(!currentVote.options.includes(data.option)){
+                        conn.send({ type:"kiosk-vote-result", success:false, reason:"invalid" });
+                        return;
+                    }
+                    tokenCodes[kcode].votedInRounds.push(currentVote.roundId);
+                    currentVote.votes[data.option]++;
+                    currentVote.totalCast++;
+                    conn.send({ type:"kiosk-vote-result", success:true });
+                    updateLiveBars();
+                    if(currentVote.totalCast >= voterCount) closeVote();
+                }
+                // --- OPEN MODE: Cast vote ---
+                if(data.type === "cast-vote" && currentVote && sessionMode === "open"){
                     var lsId = data.deviceId || connDeviceMap.get(conn.peer) || conn.peer;
                     var fpId = data.fingerprintId || connDeviceMap.get(conn.peer + ":fp") || null;
                     // Check BOTH: if either is already known, reject
@@ -510,19 +728,29 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
         function sendStateToConn(conn){
             if(currentVote){
-                conn.send({ type:"vote-started", topic:currentVote.topic, description:currentVote.description, voteType:currentVote.type, options:currentVote.options, voteRoundId:currentVote.roundId, timerSeconds:timerSecondsLeft });
-                var lsId = connDeviceMap.get(conn.peer);
-                var fpId = connDeviceMap.get(conn.peer + ":fp");
-                if((lsId && votedDevices.has(lsId)) || (fpId && votedDevices.has("fp:" + fpId))){
-                    conn.send({ type:"already-voted" });
+                conn.send({ type:"vote-started", topic:currentVote.topic, description:currentVote.description, voteType:currentVote.type, options:currentVote.options, voteRoundId:currentVote.roundId, timerSeconds:timerSecondsLeft, mode:sessionMode });
+                if(sessionMode === "open"){
+                    var lsId = connDeviceMap.get(conn.peer);
+                    var fpId = connDeviceMap.get(conn.peer + ":fp");
+                    if((lsId && votedDevices.has(lsId)) || (fpId && votedDevices.has("fp:" + fpId))){
+                        conn.send({ type:"already-voted" });
+                    }
                 }
             } else {
-                conn.send({ type:"waiting" });
+                conn.send({ type:"waiting", mode:sessionMode });
             }
         }
 
         function updateConnectedCount(){
             el.lblConnected.textContent = connections.size;
+            if(sessionMode === "kiosk"){
+                el.lblConnectedLabel.textContent = "Abstimmungsgeraete verbunden";
+                el.kioskDeviceInfo.classList.remove("hidden");
+                el.lblKioskDevices.textContent = connections.size;
+            } else {
+                el.lblConnectedLabel.textContent = "Teilnehmer verbunden";
+                el.kioskDeviceInfo.classList.add("hidden");
+            }
         }
 
         function broadcast(msg){
@@ -541,11 +769,15 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             connections.clear();
             currentVote = null;
             history = [];
+            tokenCodes = {};
+            generatedCodes = [];
             el.session.classList.add("hidden");
             el.welcomeInfo.classList.remove("hidden");
             el.setup.classList.remove("hidden");
             el.inpTitle.value = "";
             el.inpVoters.value = "10";
+            el.tokenPreview.classList.add("hidden");
+            el.tokenList.innerHTML = "";
         });
 
         // ---- Start vote ----
@@ -575,7 +807,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             currentVote = { topic:topic, description:desc, type:vtype, options:options, votes:votes, totalCast:0, roundId:roundId, timerEnabled:voteTimerOn, timerSeconds:voteTimerSec };
             votedDevices = new Set();
 
-            broadcast({ type:"vote-started", topic:topic, description:desc, voteType:vtype, options:options, voteRoundId:roundId, timerSeconds:voteTimerSec });
+            broadcast({ type:"vote-started", topic:topic, description:desc, voteType:vtype, options:options, voteRoundId:roundId, timerSeconds:voteTimerSec, mode:sessionMode });
             showActiveVote();
             startTimer();
         });
@@ -705,6 +937,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             el.lblVoteTopic.textContent = currentVote.topic;
             el.lblVoteDesc.textContent = currentVote.description || "";
             el.lblTotal.textContent = voterCount;
+            $("lbl-progress-label").textContent = sessionMode === "kiosk" ? "Codes eingeloest" : "Stimmen";
 
             // QR code
             var baseUrl = window.location.origin + window.location.pathname;
@@ -854,7 +1087,9 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         var peer = new Peer();
         var conn = null;
         var hasVoted = false;
-        var screens = ["v-connecting","v-waiting","v-voting","v-confirmed","v-result","v-ended","v-error"];
+        var voterMode = "open"; // will be set by host
+        var kioskCurrentCode = null;
+        var screens = ["v-connecting","v-waiting","v-voting","v-confirmed","v-result","v-ended","v-error","v-kiosk-waiting","v-kiosk-code","v-kiosk-vote","v-kiosk-confirmed"];
 
         function showScreen(id){
             screens.forEach(function(s){ document.getElementById(s).style.display = s===id ? "flex" : "none"; });
@@ -880,17 +1115,25 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
             conn.on("data", function(data){
                 if(data.type === "waiting"){
-                    showScreen("v-waiting");
+                    voterMode = data.mode || "open";
+                    showScreen(voterMode === "kiosk" ? "v-kiosk-waiting" : "v-waiting");
                 }
                 if(data.type === "vote-started"){
+                    voterMode = data.mode || "open";
                     currentRoundId = data.voteRoundId;
-                    // Check sessionStorage (survives reload) AND localStorage
-                    if(data.voteRoundId && hasVotedInRound(data.voteRoundId)){
-                        hasVoted = true;
-                        showScreen("v-confirmed");
-                    } else {
+                    if(voterMode === "kiosk"){
                         hasVoted = false;
-                        showVoting(data);
+                        kioskCurrentCode = null;
+                        showKioskCodeEntry(data);
+                    } else {
+                        // Open mode logic
+                        if(data.voteRoundId && hasVotedInRound(data.voteRoundId)){
+                            hasVoted = true;
+                            showScreen("v-confirmed");
+                        } else {
+                            hasVoted = false;
+                            showVoting(data);
+                        }
                     }
                 }
                 if(data.type === "vote-confirmed"){
@@ -902,20 +1145,33 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     markVoted(currentRoundId);
                     showScreen("v-confirmed");
                 }
+                // --- Kiosk responses ---
+                if(data.type === "kiosk-result"){
+                    handleKioskValidation(data);
+                }
+                if(data.type === "kiosk-vote-result"){
+                    handleKioskVoteResult(data);
+                }
                 if(data.type === "timer-update"){
                     voterSecondsLeft = data.seconds;
                     updateVoterTimer();
+                    // Also update kiosk timer if visible
+                    updateKioskTimer();
                 }
                 if(data.type === "vote-closed"){
                     stopVoterTimer();
-                    showVoteResult(data.result);
+                    if(voterMode === "kiosk"){
+                        showScreen("v-kiosk-waiting");
+                    } else {
+                        showVoteResult(data.result);
+                    }
                 }
                 if(data.type === "vote-cancelled"){
                     stopVoterTimer();
                     hasVoted = false;
                     clearVoted(currentRoundId);
                     currentRoundId = null;
-                    showScreen("v-waiting");
+                    showScreen(voterMode === "kiosk" ? "v-kiosk-waiting" : "v-waiting");
                 }
                 if(data.type === "session-ended"){
                     stopVoterTimer();
@@ -1027,6 +1283,202 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         function voteBtnCls(opt, type){
             if(type==="yes-no"){ if(opt==="Ja")return"ja"; if(opt==="Nein")return"nein"; return"enthaltung"; }
             return "custom";
+        }
+
+        // ===================== KIOSK VOTER FUNCTIONS =====================
+        var kioskVoteData = null;
+        var kioskTimerInterval = null;
+        var kioskSecondsLeft = 0;
+
+        function buildKioskNumpad(){
+            var pad = document.getElementById("vk-numpad");
+            if(pad.children.length > 0) return; // already built
+            var keys = ["A","B","C","D","E","F","G","H","J","K","M","N","P","Q","R","S","T","U","V","W","X","Y","Z","2","3","4","5","6","7","8","9","","&#9003;","&#10148;"];
+            // Layout: letters and numbers, plus delete and submit
+            var layout = [
+                "2","3","4","5","6","7","8","9",
+                "A","B","C","D","E","F",
+                "G","H","J","K","M","N",
+                "P","Q","R","S","T","U",
+                "V","W","X","Y","Z","DEL",
+                "SUBMIT"
+            ];
+            pad.innerHTML = "";
+            layout.forEach(function(k){
+                var btn = document.createElement("button");
+                btn.type = "button";
+                if(k === "DEL"){
+                    btn.innerHTML = "&#9003;";
+                    btn.className = "key-delete";
+                    btn.addEventListener("click", function(){ kioskDeleteChar(); });
+                } else if(k === "SUBMIT"){
+                    btn.textContent = "OK";
+                    btn.className = "key-submit";
+                    btn.style.gridColumn = "span 3";
+                    btn.addEventListener("click", function(){ kioskSubmitCode(); });
+                } else {
+                    btn.textContent = k;
+                    btn.addEventListener("click", function(){ kioskAddChar(k); });
+                }
+                pad.appendChild(btn);
+            });
+        }
+
+        function kioskAddChar(ch){
+            var inp = document.getElementById("vk-code-inp");
+            var val = inp.value.replace(/-/g, "");
+            if(val.length >= 6) return;
+            val += ch;
+            if(val.length > 3) inp.value = val.substring(0,3) + "-" + val.substring(3);
+            else inp.value = val;
+        }
+
+        function kioskDeleteChar(){
+            var inp = document.getElementById("vk-code-inp");
+            var val = inp.value.replace(/-/g, "");
+            if(val.length > 0) val = val.substring(0, val.length - 1);
+            if(val.length > 3) inp.value = val.substring(0,3) + "-" + val.substring(3);
+            else inp.value = val;
+        }
+
+        function kioskSubmitCode(){
+            var inp = document.getElementById("vk-code-inp");
+            var raw = inp.value.replace(/-/g, "").toUpperCase().trim();
+            if(raw.length !== 6){
+                showKioskMsg("Bitte vollstaendigen 6-stelligen Code eingeben.", "error");
+                return;
+            }
+            var code = raw.substring(0,3) + "-" + raw.substring(3);
+            kioskCurrentCode = code;
+            conn.send({ type:"kiosk-validate", code:code });
+        }
+
+        function showKioskCodeEntry(data){
+            kioskVoteData = data;
+            document.getElementById("vk-topic").textContent = data.topic;
+            var descEl = document.getElementById("vk-desc");
+            descEl.textContent = data.description || "";
+            descEl.style.display = data.description ? "block" : "none";
+            document.getElementById("vk-code-inp").value = "";
+            document.getElementById("vk-msg").classList.add("hidden");
+            buildKioskNumpad();
+            // Allow Enter key to submit
+            var codeInp = document.getElementById("vk-code-inp");
+            codeInp.onkeydown = function(e){
+                if(e.key === "Enter") kioskSubmitCode();
+            };
+            // Auto-format input as user types
+            codeInp.oninput = function(){
+                var raw = this.value.replace(/[^A-Za-z2-9]/g, "").toUpperCase().substring(0, 6);
+                // Filter to allowed chars only
+                var filtered = "";
+                for(var i = 0; i < raw.length; i++){
+                    if("ABCDEFGHJKMNPQRSTUVWXYZ23456789".indexOf(raw[i]) !== -1) filtered += raw[i];
+                }
+                if(filtered.length > 3) this.value = filtered.substring(0,3) + "-" + filtered.substring(3);
+                else this.value = filtered;
+            };
+            // Kiosk timer
+            startKioskTimer(data.timerSeconds || 0);
+            showScreen("v-kiosk-code");
+        }
+
+        function handleKioskValidation(data){
+            if(data.valid){
+                // Show vote options
+                document.getElementById("vk-vote-topic").textContent = data.topic;
+                var container = document.getElementById("vk-options");
+                container.innerHTML = "";
+                data.options.forEach(function(opt){
+                    var btn = document.createElement("button");
+                    btn.textContent = opt;
+                    btn.className = "btn-vote " + voteBtnCls(opt, data.voteType);
+                    btn.addEventListener("click", function(){
+                        conn.send({ type:"kiosk-cast-vote", code:kioskCurrentCode, option:opt });
+                    });
+                    container.appendChild(btn);
+                });
+                showScreen("v-kiosk-vote");
+            } else {
+                if(data.reason === "already_used"){
+                    showKioskMsg("Dieser Code wurde bereits fuer diese Abstimmung verwendet.", "error");
+                } else {
+                    showKioskMsg("Code ungueltig. Bitte pruefen Sie Ihren Code.", "error");
+                }
+            }
+        }
+
+        function handleKioskVoteResult(data){
+            if(data.success){
+                showScreen("v-kiosk-confirmed");
+                // Auto-reset after 3 seconds back to code entry
+                setTimeout(function(){
+                    if(kioskVoteData){
+                        kioskCurrentCode = null;
+                        showKioskCodeEntry(kioskVoteData);
+                    }
+                }, 3000);
+            } else {
+                // Back to code entry with error
+                if(kioskVoteData) showKioskCodeEntry(kioskVoteData);
+                if(data.reason === "already_used"){
+                    showKioskMsg("Dieser Code wurde bereits fuer diese Abstimmung verwendet.", "error");
+                } else {
+                    showKioskMsg("Fehler bei der Stimmabgabe.", "error");
+                }
+            }
+        }
+
+        function showKioskMsg(text, type){
+            var msg = document.getElementById("vk-msg");
+            msg.textContent = text;
+            msg.className = "kiosk-msg " + type;
+            msg.classList.remove("hidden");
+            setTimeout(function(){
+                msg.classList.add("hidden");
+                document.getElementById("vk-code-inp").value = "";
+            }, 3000);
+        }
+
+        function startKioskTimer(seconds){
+            stopKioskTimer();
+            var timerEl = document.getElementById("vk-timer");
+            if(!seconds || seconds <= 0){
+                timerEl.classList.add("hidden");
+                return;
+            }
+            kioskSecondsLeft = seconds;
+            timerEl.classList.remove("hidden");
+            updateKioskTimer();
+            kioskTimerInterval = setInterval(function(){
+                kioskSecondsLeft--;
+                if(kioskSecondsLeft <= 0){
+                    kioskSecondsLeft = 0;
+                    stopKioskTimer();
+                }
+                updateKioskTimer();
+            }, 1000);
+        }
+
+        function stopKioskTimer(){
+            if(kioskTimerInterval){ clearInterval(kioskTimerInterval); kioskTimerInterval = null; }
+        }
+
+        function updateKioskTimer(){
+            var timerEl = document.getElementById("vk-timer");
+            if(!timerEl) return;
+            var m = Math.floor(kioskSecondsLeft / 60);
+            var s = kioskSecondsLeft % 60;
+            timerEl.textContent = (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+            timerEl.className = "voter-timer";
+            if(kioskSecondsLeft <= 0){
+                timerEl.textContent = "Zeit abgelaufen!";
+                timerEl.classList.add("danger");
+            } else if(kioskSecondsLeft <= 10){
+                timerEl.classList.add("danger");
+            } else if(kioskSecondsLeft <= 30){
+                timerEl.classList.add("warning");
+            }
         }
     }
 
