@@ -1,16 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-  <circle cx="100" cy="100" r="96" fill="white" stroke="#1a1a1a" stroke-width="4.5"/>
-  <circle cx="100" cy="100" r="82" fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+  <circle cx="100" cy="100" r="97" fill="white" stroke="#1d1d1b" stroke-width="3"/>
   <defs>
-    <path id="top-arc" d="M 100,100 m -68,0 a 68,68 0 1,1 136,0" fill="none"/>
-    <path id="bot-arc" d="M 100,100 m 68,0 a 68,68 0 1,1 -136,0" fill="none"/>
+    <path id="top-arc" d="M 100,100 m -72,0 a 72,72 0 1,1 144,0" fill="none"/>
+    <path id="bot-arc" d="M 100,100 m 72,0 a 72,72 0 1,1 -144,0" fill="none"/>
   </defs>
-  <text font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="700" fill="#1a1a1a" letter-spacing="5">
+  <text font-family="Arial Black,Arial,Helvetica,sans-serif" font-size="22" font-weight="900" fill="#1d1d1b" letter-spacing="4">
     <textPath href="#top-arc" startOffset="50%" text-anchor="middle">DEUTSCHES</textPath>
   </text>
-  <text font-family="Arial,Helvetica,sans-serif" font-size="19" font-weight="700" fill="#1a1a1a" letter-spacing="3.5">
+  <text font-family="Arial Black,Arial,Helvetica,sans-serif" font-size="22" font-weight="900" fill="#1d1d1b" letter-spacing="2.5">
     <textPath href="#bot-arc" startOffset="50%" text-anchor="middle">ROTES KREUZ</textPath>
   </text>
-  <rect x="80" y="38" width="40" height="124" rx="2" fill="#e30613"/>
-  <rect x="38" y="80" width="124" height="40" rx="2" fill="#e30613"/>
+  <rect x="76" y="34" width="48" height="132" rx="1" fill="#ff0000"/>
+  <rect x="34" y="76" width="132" height="48" rx="1" fill="#ff0000"/>
 </svg>
