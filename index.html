@@ -713,36 +713,38 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             el.connecting.classList.remove("hidden");
             el.newVote.classList.add("hidden");
 
-            // Create PeerJS peer with short ID
-            var peerId = "drk-" + randomCode(6);
-            peer = new Peer(peerId);
+            // Create PeerJS peer with crypto-secure ID (16 hex chars = 2^64 possibilities)
+            var peerIdRetries = 0;
+            var maxPeerIdRetries = 3;
 
-            peer.on("open", function(){
-                el.connecting.classList.add("hidden");
-                el.newVote.classList.remove("hidden");
-                el.voteInfo.classList.remove("hidden");
-            });
+            function createHostPeer(){
+                var peerId = "drk-" + randomCode(16);
+                peer = new Peer(peerId);
+                peer.on("open", function(){
+                    el.connecting.classList.add("hidden");
+                    el.newVote.classList.remove("hidden");
+                    el.voteInfo.classList.remove("hidden");
+                });
+                peer.on("connection", function(conn){ setupConnection(conn); });
+                peer.on("error", handlePeerError);
+                return peerId;
+            }
 
-            peer.on("connection", function(conn){
-                setupConnection(conn);
-            });
-
-            peer.on("error", function(err){
+            function handlePeerError(err){
                 if(err.type === "unavailable-id"){
-                    // ID taken, retry with new one
-                    peer.destroy();
-                    peerId = "drk-" + randomCode(6);
-                    peer = new Peer(peerId);
-                    peer.on("open", function(){
-                        el.connecting.classList.add("hidden");
-                        el.newVote.classList.remove("hidden");
-                        el.voteInfo.classList.remove("hidden");
-                    });
-                    peer.on("connection", function(conn){ setupConnection(conn); });
+                    peerIdRetries++;
+                    if(peerIdRetries <= maxPeerIdRetries){
+                        peer.destroy();
+                        createHostPeer();
+                    } else {
+                        el.connecting.innerHTML = '<div class="error-box">Peer-ID-Kollision nach ' + maxPeerIdRetries + ' Versuchen. Bitte laden Sie die Seite neu.</div>';
+                    }
                 } else {
                     el.connecting.innerHTML = '<div class="error-box">Verbindungsfehler: ' + esc(err.type) + '</div>';
                 }
-            });
+            }
+
+            var peerId = createHostPeer();
         });
 
         function setupConnection(conn){
@@ -2061,7 +2063,13 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
     function esc(s){ var d=document.createElement("div"); d.appendChild(document.createTextNode(s)); return d.innerHTML; }
     function randomCode(len){
         var c="abcdefghijklmnopqrstuvwxyz0123456789", r="";
-        for(var i=0;i<len;i++) r+=c[Math.floor(Math.random()*c.length)];
+        if(window.crypto && window.crypto.getRandomValues){
+            var arr = new Uint8Array(len);
+            window.crypto.getRandomValues(arr);
+            for(var i=0;i<len;i++) r+=c[arr[i]%c.length];
+        } else {
+            for(var i=0;i<len;i++) r+=c[Math.floor(Math.random()*c.length)];
+        }
         return r;
     }
 
