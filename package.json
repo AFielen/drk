@@ -1,0 +1,12 @@
+{
+    "name": "drk-vereinsabstimmung",
+    "version": "1.0.0",
+    "description": "Digitales Abstimmungssystem für DRK Vereinssitzungen",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "qrcode": "^1.5.4"
+    }
+}

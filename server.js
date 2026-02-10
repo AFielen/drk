@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const os = require("os");
+const QRCode = require("qrcode");
 
 const PORT = process.env.PORT || 3000;
 
@@ -258,6 +259,31 @@ const server = http.createServer(async (req, res) => {
         }
         sseClients.delete(mEnd[1]);
         sendJSON(res, 200, { ok: true });
+        return;
+    }
+
+    // ---- API: QR code as SVG ----
+    const mQR = p.match(/^\/api\/qr\/([a-f0-9]+)$/);
+    if (method === "GET" && mQR) {
+        const code = mQR[1];
+        const ip = getLocalIP();
+        const voteURL = `http://${ip}:${PORT}/vote/${code}`;
+        try {
+            const svg = await QRCode.toString(voteURL, {
+                type: "svg",
+                width: 300,
+                margin: 2,
+                color: { dark: "#e30613", light: "#ffffff" },
+            });
+            res.writeHead(200, {
+                "Content-Type": "image/svg+xml",
+                "Cache-Control": "no-cache",
+            });
+            res.end(svg);
+        } catch {
+            res.writeHead(500);
+            res.end("QR generation failed");
+        }
         return;
     }
 

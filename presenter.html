@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DRK Vereinsabstimmung</title>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -218,7 +217,7 @@ footer{text-align:center;padding:1rem;color:var(--text-light);font-size:.8rem}
 
             <div class="vote-live">
                 <div class="qr-area">
-                    <canvas id="qr-canvas"></canvas>
+                    <div id="qr-container"></div>
                     <div class="qr-label">QR-Code scannen zum Abstimmen</div>
                 </div>
                 <div class="progress-area">
@@ -290,7 +289,7 @@ footer{text-align:center;padding:1rem;color:var(--text-light);font-size:.8rem}
         secActiveVote: $("sec-active-vote"),
         lblVoteTopic: $("lbl-vote-topic"),
         lblVoteDesc: $("lbl-vote-desc"),
-        qrCanvas: $("qr-canvas"),
+        qrContainer: $("qr-container"),
         lblCast: $("lbl-cast"),
         lblTotal: $("lbl-total"),
         barProgress: $("bar-progress"),
@@ -442,13 +441,14 @@ footer{text-align:center;padding:1rem;color:var(--text-light);font-size:.8rem}
         el.lblVoteDesc.textContent = currentVote.description || "";
         el.lblTotal.textContent = el.inpVoters.value || "?";
 
-        // QR code
-        var voteURL = "http://" + sessionIP + ":" + sessionPort + "/vote/" + sessionCode;
-        QRCode.toCanvas(el.qrCanvas, voteURL, {
-            width: 220,
-            margin: 2,
-            color: { dark:"#e30613", light:"#ffffff" }
-        });
+        // QR code (generated server-side)
+        var img = document.createElement("img");
+        img.src = "/api/qr/" + sessionCode;
+        img.alt = "QR-Code zum Abstimmen";
+        img.width = 220;
+        img.height = 220;
+        el.qrContainer.innerHTML = "";
+        el.qrContainer.appendChild(img);
 
         updateLiveBars();
     }
