@@ -397,21 +397,16 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             conn.on("open", function(){
                 connections.set(conn.peer, conn);
                 updateConnectedCount();
+                // Send current state immediately on connect
+                sendStateToConn(conn);
             });
 
             conn.on("data", function(data){
                 // Voter registers with persistent device ID
                 if(data.type === "register" && data.deviceId){
                     connDeviceMap.set(conn.peer, data.deviceId);
-                    // Send current state after registration
-                    if(currentVote){
-                        conn.send({ type:"vote-started", topic:currentVote.topic, description:currentVote.description, voteType:currentVote.type, options:currentVote.options, voteRoundId:currentVote.roundId });
-                        if(votedDevices.has(data.deviceId)){
-                            conn.send({ type:"already-voted" });
-                        }
-                    } else {
-                        conn.send({ type:"waiting" });
-                    }
+                    // Re-send state with device-aware already-voted check
+                    sendStateToConn(conn);
                 }
                 if(data.type === "cast-vote" && currentVote){
                     var deviceId = data.deviceId || connDeviceMap.get(conn.peer) || conn.peer;
@@ -434,6 +429,18 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 connections.delete(conn.peer);
                 updateConnectedCount();
             });
+        }
+
+        function sendStateToConn(conn){
+            if(currentVote){
+                conn.send({ type:"vote-started", topic:currentVote.topic, description:currentVote.description, voteType:currentVote.type, options:currentVote.options, voteRoundId:currentVote.roundId });
+                var deviceId = connDeviceMap.get(conn.peer);
+                if(deviceId && votedDevices.has(deviceId)){
+                    conn.send({ type:"already-voted" });
+                }
+            } else {
+                conn.send({ type:"waiting" });
+            }
         }
 
         function updateConnectedCount(){
@@ -657,6 +664,37 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             localStorage.setItem("drk-voted-rounds", JSON.stringify(cleaned));
         } catch(e){}
 
+        // Helper functions using BOTH sessionStorage and localStorage
+        function hasVotedInRound(roundId){
+            if(!roundId) return false;
+            // sessionStorage is most reliable for same-tab reloads
+            if(sessionStorage.getItem("drk-voted-" + roundId)) return true;
+            // localStorage as fallback
+            try {
+                var rounds = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
+                if(rounds[roundId]) return true;
+            } catch(e){}
+            return false;
+        }
+        function markVoted(roundId){
+            if(!roundId) return;
+            try { sessionStorage.setItem("drk-voted-" + roundId, "1"); } catch(e){}
+            try {
+                var rounds = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
+                rounds[roundId] = true;
+                localStorage.setItem("drk-voted-rounds", JSON.stringify(rounds));
+            } catch(e){}
+        }
+        function clearVoted(roundId){
+            if(!roundId) return;
+            try { sessionStorage.removeItem("drk-voted-" + roundId); } catch(e){}
+            try {
+                var rounds = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
+                delete rounds[roundId];
+                localStorage.setItem("drk-voted-rounds", JSON.stringify(rounds));
+            } catch(e){}
+        }
+
         var peer = new Peer();
         var conn = null;
         var hasVoted = false;
@@ -680,9 +718,8 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 }
                 if(data.type === "vote-started"){
                     currentRoundId = data.voteRoundId;
-                    // Check localStorage if we already voted in this round
-                    var votedRounds = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
-                    if(data.voteRoundId && votedRounds[data.voteRoundId]){
+                    // Check sessionStorage (survives reload) AND localStorage
+                    if(data.voteRoundId && hasVotedInRound(data.voteRoundId)){
                         hasVoted = true;
                         showScreen("v-confirmed");
                     } else {
@@ -691,21 +728,12 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                     }
                 }
                 if(data.type === "vote-confirmed"){
-                    // Store that we voted in this round
-                    if(currentRoundId){
-                        var vr = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
-                        vr[currentRoundId] = true;
-                        localStorage.setItem("drk-voted-rounds", JSON.stringify(vr));
-                    }
+                    markVoted(currentRoundId);
                     showScreen("v-confirmed");
                 }
                 if(data.type === "already-voted"){
                     hasVoted = true;
-                    if(currentRoundId){
-                        var vr2 = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
-                        vr2[currentRoundId] = true;
-                        localStorage.setItem("drk-voted-rounds", JSON.stringify(vr2));
-                    }
+                    markVoted(currentRoundId);
                     showScreen("v-confirmed");
                 }
                 if(data.type === "vote-closed"){
@@ -713,11 +741,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 }
                 if(data.type === "vote-cancelled"){
                     hasVoted = false;
-                    if(currentRoundId){
-                        var vr3 = JSON.parse(localStorage.getItem("drk-voted-rounds") || "{}");
-                        delete vr3[currentRoundId];
-                        localStorage.setItem("drk-voted-rounds", JSON.stringify(vr3));
-                    }
+                    clearVoted(currentRoundId);
                     currentRoundId = null;
                     showScreen("v-waiting");
                 }
@@ -757,7 +781,10 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
                 btn.addEventListener("click", function(){
                     if(hasVoted) return;
                     hasVoted = true;
+                    // Store IMMEDIATELY before sending to server
+                    markVoted(currentRoundId);
                     conn.send({ type:"cast-vote", option:opt, deviceId:deviceId });
+                    showScreen("v-confirmed");
                 });
                 container.appendChild(btn);
             });
