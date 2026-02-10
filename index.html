@@ -157,7 +157,18 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
 
 /* === MODE SELECTION === */
 .mode-select{margin-bottom:1rem}
-.mode-select>label{font-weight:600;font-size:.9rem;display:block;margin-bottom:.35rem}
+.mode-select>label{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:6px;margin-bottom:.35rem}
+.help-icon{width:20px;height:20px;border-radius:50%;background:#eee;color:#666;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s,color .2s;flex-shrink:0;user-select:none;line-height:1}
+.help-icon:hover{background:var(--drk);color:#fff}
+.help-popover-wrap{position:relative;display:inline-block}
+.help-popover{display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:100;background:#fff;border-radius:var(--radius);box-shadow:0 4px 24px rgba(0,0,0,.14);padding:1.1rem 1.25rem;width:360px;font-size:.88rem;line-height:1.6;color:var(--text);font-weight:400}
+.help-popover.open{display:block}
+.help-popover h4{font-size:.92rem;font-weight:700;margin-bottom:.25rem;color:var(--drk)}
+.help-popover p{margin-bottom:.75rem;color:var(--text)}
+.help-popover p:last-child{margin-bottom:0}
+.help-popover-close{position:absolute;top:8px;right:10px;background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-light);line-height:1;padding:2px}
+.help-popover-close:hover{color:var(--text)}
+@media(max-width:480px){.help-popover{width:calc(100vw - 3rem);left:-1rem}}
 .mode-cards{display:flex;gap:1rem;flex-wrap:wrap}
 .mode-card{flex:1;min-width:200px;border:2px solid var(--border);border-radius:var(--radius);padding:1rem;cursor:pointer;transition:border-color .2s,background .2s;text-align:center}
 .mode-card.active{border-color:var(--drk);background:#fef3f3}
@@ -242,7 +253,7 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             <input type="number" id="inp-voters" min="1" value="10">
         </div>
         <div class="mode-select">
-            <label>Abstimmungsmodus:</label>
+            <label>Abstimmungsmodus: <span class="help-popover-wrap"><span class="help-icon" id="help-mode-btn" role="button" aria-label="Hilfe">?</span><div class="help-popover" id="help-mode-pop"><button class="help-popover-close" id="help-mode-close" type="button" aria-label="Schliessen">&times;</button><h4>Offener Modus</h4><p>Jedes stimmberechtigte Mitglied scannt den QR-Code mit dem eigenen Smartphone und stimmt direkt ab. Alle stimmen gleichzeitig ab -- ideal fuer groessere Versammlungen.</p><h4>Stimmkarten-Modus</h4><p>Es werden ein bis fuenf Geraete bereitgestellt und bei der Abstimmung durchgereicht. Jeder Stimmberechtigte erhaelt vorab einen einmaligen Code auf einer Stimmkarte. Hoechste Sicherheit, da ein physischer Code erforderlich ist.</p></div></span></label>
             <div class="mode-cards">
                 <label class="mode-card active" id="mc-open">
                     <input type="radio" name="session-mode" value="open" checked>
@@ -622,6 +633,22 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
             area.innerHTML = html;
             setTimeout(function(){ window.print(); }, 100);
         });
+
+        // ---- Help popover ----
+        (function(){
+            var btn = $("help-mode-btn"), pop = $("help-mode-pop"), cls = $("help-mode-close");
+            btn.addEventListener("click", function(e){
+                e.stopPropagation();
+                pop.classList.toggle("open");
+            });
+            cls.addEventListener("click", function(e){
+                e.stopPropagation();
+                pop.classList.remove("open");
+            });
+            document.addEventListener("click", function(e){
+                if(!pop.contains(e.target) && e.target !== btn) pop.classList.remove("open");
+            });
+        })();
 
         // Vote type toggle
         document.querySelectorAll('input[name="vtype"]').forEach(function(r){
