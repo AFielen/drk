@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>DRK Vereinsabstimmung</title>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+    <style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+    --drk:#e30613;--drk-dark:#b70510;--drk-light:#ff2d3a;
+    --white:#fff;--bg:#f4f4f4;--card:#fff;
+    --text:#2a2a2a;--text-light:#777;--border:#e0e0e0;
+    --success:#2e7d32;--warning:#f9a825;--danger:#c62828;
+    --radius:10px;
+}
+html,body{height:100%}
+body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    display:flex;flex-direction:column;min-height:100%;
+    -webkit-tap-highlight-color:transparent;
+}
+header{
+    background:var(--drk);color:var(--white);
+    padding:1rem 1.5rem;display:flex;align-items:center;gap:.75rem;
+}
+.drk-logo{display:flex;align-items:center;gap:.75rem}
+.drk-logo h1{font-size:1.4rem;font-weight:700}
+.drk-logo .sub{font-size:.8rem;opacity:.85}
+
+/* === PRESENTER STYLES === */
+#view-presenter main{flex:1;max-width:900px;width:100%;margin:0 auto;padding:1.5rem 1rem}
+.card{background:var(--card);border-radius:var(--radius);padding:1.5rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card h2{font-size:1.2rem;margin-bottom:1rem;color:var(--drk)}
+.card h3{font-size:1.05rem;margin-bottom:.75rem}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-weight:600;font-size:.9rem;margin-bottom:.3rem}
+input[type=text],input[type=number],textarea{
+    width:100%;padding:.6rem .75rem;border:1px solid var(--border);
+    border-radius:var(--radius);font-size:.95rem;font-family:inherit;transition:border .2s;
+}
+input:focus,textarea:focus{outline:none;border-color:var(--drk);box-shadow:0 0 0 3px rgba(227,6,19,.12)}
+.btn{
+    display:inline-block;padding:.6rem 1.25rem;font-size:.95rem;font-weight:600;
+    border:none;border-radius:var(--radius);cursor:pointer;font-family:inherit;
+    transition:background .2s,transform .1s;
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--drk);color:var(--white)}
+.btn-primary:hover{background:var(--drk-dark)}
+.btn-secondary{background:var(--border);color:var(--text)}
+.btn-secondary:hover{background:#ccc}
+.btn-danger{background:var(--danger);color:var(--white)}
+.btn-danger:hover{background:#a11a1a}
+.btn-sm{padding:.35rem .7rem;font-size:.85rem}
+.hidden{display:none!important}
+.badge{display:inline-block;background:var(--drk);color:var(--white);padding:.2rem .7rem;border-radius:999px;font-size:.8rem;font-weight:600}
+.session-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.session-bar .info{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.session-bar h2{margin-bottom:0}
+.vote-type-select{margin-bottom:1rem}
+.vote-type-select>label{font-weight:600;font-size:.9rem;display:block;margin-bottom:.35rem}
+.radio-group{display:flex;gap:1.25rem;flex-wrap:wrap}
+.radio-label{display:flex;align-items:center;gap:.35rem;font-size:.9rem;cursor:pointer}
+/* QR + Progress */
+.vote-live{display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap;margin:1rem 0}
+.qr-area{text-align:center;flex-shrink:0}
+.qr-area canvas,.qr-area img{border:4px solid var(--drk);border-radius:var(--radius)}
+.qr-label{font-size:.8rem;color:var(--text-light);margin-top:.5rem}
+.qr-url{font-size:.7rem;color:var(--text-light);word-break:break-all;margin-top:.25rem;max-width:220px}
+.progress-area{flex:1;min-width:250px}
+.vote-progress-info{font-size:.95rem;color:var(--text-light);margin-bottom:.75rem}
+.progress-bar{width:100%;height:10px;background:var(--border);border-radius:999px;overflow:hidden;margin-top:.3rem}
+.progress-fill{height:100%;background:var(--drk);border-radius:999px;transition:width .4s;width:0}
+.connected-count{font-size:.85rem;color:var(--text-light);margin-bottom:.75rem}
+/* Live bars */
+.live-bar-group{margin-bottom:.6rem}
+.live-bar-label{display:flex;justify-content:space-between;font-size:.9rem;font-weight:600;margin-bottom:.2rem}
+.live-bar-track{width:100%;height:24px;background:var(--border);border-radius:var(--radius);overflow:hidden}
+.live-bar-fill{height:100%;border-radius:var(--radius);transition:width .4s}
+.live-bar-fill.ja{background:var(--success)}
+.live-bar-fill.nein{background:var(--danger)}
+.live-bar-fill.enthaltung{background:var(--warning)}
+.live-bar-fill.custom{background:var(--drk)}
+/* Result */
+.result-bar-group{margin-bottom:.75rem}
+.result-bar-label{display:flex;justify-content:space-between;font-size:.95rem;font-weight:600;margin-bottom:.25rem}
+.result-bar-track{width:100%;height:32px;background:var(--border);border-radius:var(--radius);overflow:hidden}
+.result-bar-fill{height:100%;border-radius:var(--radius);transition:width .6s}
+.result-bar-fill.ja{background:var(--success)}.result-bar-fill.nein{background:var(--danger)}
+.result-bar-fill.enthaltung{background:var(--warning)}.result-bar-fill.custom{background:var(--drk)}
+.result-summary{margin-top:1.25rem;padding:1rem;border-radius:var(--radius);font-weight:700;text-align:center;font-size:1.3rem}
+.result-summary.accepted{background:#e8f5e9;color:#1b5e20}
+.result-summary.rejected{background:#ffebee;color:#b71c1c}
+.result-summary.neutral{background:#f5f5f5;color:var(--text)}
+.vote-actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem}
+/* History */
+.history-item{display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:var(--bg);border-radius:var(--radius);flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem}
+.history-topic{font-weight:600;font-size:.95rem}
+.history-result{font-size:.8rem;padding:.2rem .6rem;border-radius:999px;font-weight:600}
+.history-result.accepted{background:#e8f5e9;color:#1b5e20}
+.history-result.rejected{background:#ffebee;color:#b71c1c}
+.history-result.neutral{background:#eee;color:var(--text)}
+.history-details{width:100%;font-size:.85rem;color:var(--text-light)}
+.empty-state{text-align:center;color:var(--text-light);padding:1rem;font-style:italic}
+
+/* === VOTER STYLES === */
+#view-voter{flex:1;display:flex;flex-direction:column}
+#view-voter main{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:1.5rem 1rem;text-align:center}
+.screen{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:1rem}
+.state-title{font-size:1.3rem;font-weight:700}
+.state-sub{font-size:.95rem;color:var(--text-light);line-height:1.5}
+.vote-topic{font-size:1.2rem;font-weight:700;line-height:1.4}
+.vote-desc{font-size:.9rem;color:var(--text-light)}
+.vote-options{width:100%;display:flex;flex-direction:column;gap:.75rem;margin-top:.5rem}
+.btn-vote{width:100%;padding:1.1rem 1rem;font-size:1.15rem;font-weight:700;border:none;border-radius:var(--radius);cursor:pointer;color:var(--white);transition:transform .1s,opacity .1s;font-family:inherit}
+.btn-vote:active{transform:scale(.96);opacity:.85}
+.btn-vote.ja{background:var(--success)}.btn-vote.nein{background:var(--danger)}
+.btn-vote.enthaltung{background:var(--warning);color:var(--text)}.btn-vote.custom{background:var(--drk)}
+.confirmed-icon{width:80px;height:80px;border-radius:50%;background:var(--success);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:2.5rem;animation:pop .4s ease}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.voter-result{width:100%;padding:1rem;border-radius:var(--radius);font-weight:700;font-size:1.1rem}
+.voter-result.accepted{background:#e8f5e9;color:#1b5e20}
+.voter-result.rejected{background:#ffebee;color:#b71c1c}
+.voter-result.neutral{background:#f5f5f5;color:var(--text)}
+.result-detail{font-size:.85rem;color:var(--text-light);margin-top:.5rem;line-height:1.5}
+.error-box{background:#ffebee;color:var(--danger);padding:1rem;border-radius:var(--radius);font-weight:600;width:100%}
+.spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--drk);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
+
+@media(max-width:600px){
+    header{padding:.75rem 1rem}
+    .drk-logo h1{font-size:1.15rem}
+    #view-presenter main{padding:1rem .5rem}
+    .card{padding:1rem}
+    .vote-live{flex-direction:column;align-items:center}
+    .session-bar{flex-direction:column;align-items:flex-start;gap:.75rem}
+}
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="drk-logo">
+        <svg viewBox="0 0 44 44" width="38" height="38"><circle cx="22" cy="22" r="21" fill="white"/><rect x="18" y="6" width="8" height="32" rx="1.5" fill="#e30613"/><rect x="6" y="18" width="32" height="8" rx="1.5" fill="#e30613"/></svg>
+        <div><h1>DRK Vereinsabstimmung</h1><div class="sub">Digitales Abstimmungssystem</div></div>
+    </div>
+</header>
+
+<!-- ==================== PRESENTER VIEW ==================== -->
+<div id="view-presenter">
+<main>
+    <!-- Setup -->
+    <section id="p-setup" class="card">
+        <h2>Sitzung einrichten</h2>
+        <div class="form-group">
+            <label for="inp-title">Sitzungstitel</label>
+            <input type="text" id="inp-title" placeholder="z.B. Jahreshauptversammlung 2026">
+        </div>
+        <div class="form-group">
+            <label for="inp-voters">Anzahl Stimmberechtigte</label>
+            <input type="number" id="inp-voters" min="1" value="10">
+        </div>
+        <button class="btn btn-primary" id="btn-start-session">Sitzung starten</button>
+    </section>
+
+    <!-- Session active -->
+    <section id="p-session" class="hidden">
+        <div class="card session-bar">
+            <div class="info"><h2 id="lbl-title"></h2><span class="badge" id="lbl-voters"></span></div>
+            <button class="btn btn-danger btn-sm" id="btn-end-session">Sitzung beenden</button>
+        </div>
+
+        <!-- Connecting indicator -->
+        <div id="p-connecting" class="card" style="text-align:center;padding:2rem">
+            <div class="spinner" style="margin:0 auto .75rem"></div>
+            <p>Verbindung wird hergestellt...</p>
+        </div>
+
+        <!-- New vote form -->
+        <div id="p-new-vote" class="card hidden">
+            <h3>Neue Abstimmung</h3>
+            <div class="form-group">
+                <label for="inp-topic">Thema / Antrag</label>
+                <input type="text" id="inp-topic" placeholder="z.B. Erhöhung des Mitgliedsbeitrags">
+            </div>
+            <div class="form-group">
+                <label for="inp-desc">Beschreibung (optional)</label>
+                <textarea id="inp-desc" rows="2" placeholder="Details zum Antrag..."></textarea>
+            </div>
+            <div class="vote-type-select">
+                <label>Abstimmungsart:</label>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="vtype" value="yes-no" checked> Ja / Nein / Enthaltung</label>
+                    <label class="radio-label"><input type="radio" name="vtype" value="custom"> Eigene Optionen</label>
+                </div>
+            </div>
+            <div id="p-custom-opts" class="hidden">
+                <div class="form-group">
+                    <label>Optionen (eine pro Zeile)</label>
+                    <textarea id="inp-custom" rows="3" placeholder="Option A&#10;Option B&#10;Option C"></textarea>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btn-start-vote">Abstimmung starten</button>
+        </div>
+
+        <!-- Active vote -->
+        <div id="p-active-vote" class="card hidden">
+            <h3 id="lbl-vote-topic"></h3>
+            <p id="lbl-vote-desc" style="color:var(--text-light);font-size:.9rem;margin-bottom:1rem"></p>
+            <div class="vote-live">
+                <div class="qr-area">
+                    <canvas id="qr-canvas"></canvas>
+                    <div class="qr-label">QR-Code scannen zum Abstimmen</div>
+                    <div class="qr-url" id="lbl-vote-url"></div>
+                </div>
+                <div class="progress-area">
+                    <div class="connected-count"><span id="lbl-connected">0</span> Teilnehmer verbunden</div>
+                    <div class="vote-progress-info">
+                        <strong><span id="lbl-cast">0</span></strong> von <strong><span id="lbl-total">0</span></strong> Stimmen
+                        <div class="progress-bar"><div class="progress-fill" id="bar-progress"></div></div>
+                    </div>
+                    <div id="live-bars"></div>
+                </div>
+            </div>
+            <div class="vote-actions">
+                <button class="btn btn-primary" id="btn-close-vote">Abstimmung schließen</button>
+                <button class="btn btn-secondary" id="btn-cancel-vote">Abbrechen</button>
+            </div>
+        </div>
+
+        <!-- Result -->
+        <div id="p-result" class="card hidden">
+            <h2 style="color:var(--text)">Ergebnis</h2>
+            <h3 id="lbl-result-topic"></h3>
+            <div id="result-bars" style="margin-top:1rem"></div>
+            <div id="result-summary" class="result-summary"></div>
+            <div class="vote-actions" style="margin-top:1.25rem">
+                <button class="btn btn-primary" id="btn-next-vote">Nächste Abstimmung</button>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div id="p-history" class="card">
+            <h3>Bisherige Abstimmungen</h3>
+            <div id="history-list"><p class="empty-state">Noch keine Abstimmungen durchgeführt.</p></div>
+        </div>
+    </section>
+</main>
+</div>
+
+<!-- ==================== VOTER VIEW ==================== -->
+<div id="view-voter" style="display:none">
+<main>
+    <div id="v-connecting" class="screen">
+        <div class="spinner"></div>
+        <div class="state-title">Verbindung wird hergestellt...</div>
+    </div>
+    <div id="v-waiting" class="screen" style="display:none">
+        <div class="state-title">Willkommen!</div>
+        <div class="state-sub">Die nächste Abstimmung wird gleich gestartet.<br>Bitte warten...</div>
+        <div class="spinner" style="margin-top:.5rem"></div>
+    </div>
+    <div id="v-voting" class="screen" style="display:none">
+        <div class="vote-topic" id="v-topic"></div>
+        <div class="vote-desc" id="v-desc"></div>
+        <div class="vote-options" id="v-options"></div>
+    </div>
+    <div id="v-confirmed" class="screen" style="display:none">
+        <div class="confirmed-icon">&#10003;</div>
+        <div class="state-title">Stimme abgegeben!</div>
+        <div class="state-sub">Ihre Stimme wurde erfolgreich registriert.</div>
+    </div>
+    <div id="v-result" class="screen" style="display:none">
+        <div class="state-title">Ergebnis</div>
+        <div class="voter-result" id="r-summary"></div>
+        <div class="result-detail" id="r-detail"></div>
+    </div>
+    <div id="v-ended" class="screen" style="display:none">
+        <div class="state-title">Sitzung beendet</div>
+        <div class="state-sub">Vielen Dank für Ihre Teilnahme!</div>
+    </div>
+    <div id="v-error" class="screen" style="display:none">
+        <div class="error-box" id="v-err-msg">Verbindung fehlgeschlagen.</div>
+    </div>
+</main>
+</div>
+
+<footer>DRK Vereinsabstimmung &mdash; Deutsches Rotes Kreuz</footer>
+
+<script>
+(function(){
+    "use strict";
+
+    // ===================== MODE DETECTION =====================
+    var params = new URLSearchParams(window.location.search);
+    var votePeerId = params.get("vote");
+    var isVoter = !!votePeerId;
+
+    if(isVoter){
+        document.getElementById("view-presenter").style.display = "none";
+        document.getElementById("view-voter").style.display = "";
+        initVoter(votePeerId);
+    } else {
+        initPresenter();
+    }
+
+    // ===================== PRESENTER =====================
+    function initPresenter(){
+        var peer = null;
+        var connections = new Map();
+        var sessionTitle = "";
+        var voterCount = 10;
+        var currentVote = null;
+        var votedPeers = new Set();
+        var history = [];
+
+        var $ = function(id){ return document.getElementById(id); };
+        var el = {
+            setup: $("p-setup"), session: $("p-session"), connecting: $("p-connecting"),
+            inpTitle: $("inp-title"), inpVoters: $("inp-voters"),
+            btnStartSession: $("btn-start-session"), btnEndSession: $("btn-end-session"),
+            lblTitle: $("lbl-title"), lblVoters: $("lbl-voters"),
+            newVote: $("p-new-vote"), activeVote: $("p-active-vote"),
+            result: $("p-result"), historyCard: $("p-history"),
+            inpTopic: $("inp-topic"), inpDesc: $("inp-desc"),
+            customOpts: $("p-custom-opts"), inpCustom: $("inp-custom"),
+            btnStartVote: $("btn-start-vote"), btnCloseVote: $("btn-close-vote"),
+            btnCancelVote: $("btn-cancel-vote"), btnNextVote: $("btn-next-vote"),
+            lblVoteTopic: $("lbl-vote-topic"), lblVoteDesc: $("lbl-vote-desc"),
+            qrCanvas: $("qr-canvas"), lblVoteUrl: $("lbl-vote-url"),
+            lblConnected: $("lbl-connected"), lblCast: $("lbl-cast"), lblTotal: $("lbl-total"),
+            barProgress: $("bar-progress"), liveBars: $("live-bars"),
+            lblResultTopic: $("lbl-result-topic"), resultBars: $("result-bars"),
+            resultSummary: $("result-summary"), historyList: $("history-list"),
+        };
+
+        // Vote type toggle
+        document.querySelectorAll('input[name="vtype"]').forEach(function(r){
+            r.addEventListener("change", function(){
+                el.customOpts.classList.toggle("hidden", this.value !== "custom");
+            });
+        });
+
+        // ---- Start session ----
+        el.btnStartSession.addEventListener("click", function(){
+            sessionTitle = el.inpTitle.value.trim();
+            voterCount = parseInt(el.inpVoters.value, 10);
+            if(!sessionTitle){ alert("Bitte Sitzungstitel eingeben."); return; }
+            if(!voterCount || voterCount < 1){ alert("Bitte gültige Anzahl eingeben."); return; }
+
+            history = [];
+            el.lblTitle.textContent = sessionTitle;
+            el.lblVoters.textContent = voterCount + " Stimmberechtigte";
+            el.setup.classList.add("hidden");
+            el.session.classList.remove("hidden");
+            el.connecting.classList.remove("hidden");
+            el.newVote.classList.add("hidden");
+
+            // Create PeerJS peer with short ID
+            var peerId = "drk-" + randomCode(6);
+            peer = new Peer(peerId);
+
+            peer.on("open", function(){
+                el.connecting.classList.add("hidden");
+                el.newVote.classList.remove("hidden");
+            });
+
+            peer.on("connection", function(conn){
+                setupConnection(conn);
+            });
+
+            peer.on("error", function(err){
+                if(err.type === "unavailable-id"){
+                    // ID taken, retry with new one
+                    peer.destroy();
+                    peerId = "drk-" + randomCode(6);
+                    peer = new Peer(peerId);
+                    peer.on("open", function(){
+                        el.connecting.classList.add("hidden");
+                        el.newVote.classList.remove("hidden");
+                    });
+                    peer.on("connection", function(conn){ setupConnection(conn); });
+                } else {
+                    el.connecting.innerHTML = '<div class="error-box">Verbindungsfehler: ' + esc(err.type) + '</div>';
+                }
+            });
+        });
+
+        function setupConnection(conn){
+            conn.on("open", function(){
+                connections.set(conn.peer, conn);
+                updateConnectedCount();
+                // Send current state to new voter
+                if(currentVote){
+                    conn.send({ type:"vote-started", topic:currentVote.topic, description:currentVote.description, voteType:currentVote.type, options:currentVote.options });
+                    if(votedPeers.has(conn.peer)){
+                        conn.send({ type:"already-voted" });
+                    }
+                } else {
+                    conn.send({ type:"waiting" });
+                }
+            });
+
+            conn.on("data", function(data){
+                if(data.type === "cast-vote" && currentVote){
+                    if(votedPeers.has(conn.peer)) {
+                        conn.send({ type:"already-voted" });
+                        return;
+                    }
+                    if(!currentVote.options.includes(data.option)) return;
+                    votedPeers.add(conn.peer);
+                    currentVote.votes[data.option]++;
+                    currentVote.totalCast++;
+                    conn.send({ type:"vote-confirmed" });
+                    updateLiveBars();
+                    // Auto-close if all voted
+                    if(currentVote.totalCast >= voterCount) closeVote();
+                }
+            });
+
+            conn.on("close", function(){
+                connections.delete(conn.peer);
+                updateConnectedCount();
+            });
+        }
+
+        function updateConnectedCount(){
+            el.lblConnected.textContent = connections.size;
+        }
+
+        function broadcast(msg){
+            connections.forEach(function(conn){
+                try{ conn.send(msg); }catch(e){}
+            });
+        }
+
+        // ---- End session ----
+        el.btnEndSession.addEventListener("click", function(){
+            if(!confirm("Sitzung wirklich beenden?")) return;
+            broadcast({ type:"session-ended" });
+            if(peer) peer.destroy();
+            peer = null;
+            connections.clear();
+            currentVote = null;
+            history = [];
+            el.session.classList.add("hidden");
+            el.setup.classList.remove("hidden");
+            el.inpTitle.value = "";
+            el.inpVoters.value = "10";
+        });
+
+        // ---- Start vote ----
+        el.btnStartVote.addEventListener("click", function(){
+            var topic = el.inpTopic.value.trim();
+            if(!topic){ alert("Bitte Thema eingeben."); return; }
+            var desc = el.inpDesc.value.trim();
+            var vtype = document.querySelector('input[name="vtype"]:checked').value;
+            var options;
+
+            if(vtype === "custom"){
+                var raw = el.inpCustom.value.trim();
+                if(!raw){ alert("Bitte Optionen eingeben."); return; }
+                options = raw.split("\n").map(function(s){return s.trim()}).filter(function(s){return s.length>0});
+                if(options.length < 2){ alert("Mindestens 2 Optionen nötig."); return; }
+            } else {
+                options = ["Ja", "Nein", "Enthaltung"];
+            }
+
+            var votes = {};
+            options.forEach(function(o){ votes[o] = 0; });
+            currentVote = { topic:topic, description:desc, type:vtype, options:options, votes:votes, totalCast:0 };
+            votedPeers = new Set();
+
+            broadcast({ type:"vote-started", topic:topic, description:desc, voteType:vtype, options:options });
+            showActiveVote();
+        });
+
+        // ---- Close vote ----
+        el.btnCloseVote.addEventListener("click", function(){
+            if(!currentVote || currentVote.totalCast === 0){
+                alert("Es wurde noch keine Stimme abgegeben."); return;
+            }
+            closeVote();
+        });
+
+        el.btnCancelVote.addEventListener("click", function(){
+            if(!confirm("Abstimmung abbrechen?")) return;
+            currentVote = null;
+            broadcast({ type:"vote-cancelled" });
+            showNewVoteForm();
+        });
+
+        el.btnNextVote.addEventListener("click", showNewVoteForm);
+
+        function closeVote(){
+            var v = currentVote;
+            var result = {
+                topic:v.topic, description:v.description, type:v.type,
+                options:v.options.slice(), votes:Object.assign({},v.votes),
+                totalCast:v.totalCast, totalVoters:voterCount
+            };
+            // Determine outcome
+            if(v.type === "yes-no"){
+                var yes = v.votes["Ja"]||0, no = v.votes["Nein"]||0;
+                result.outcome = yes > no ? "accepted" : no > yes ? "rejected" : "tie";
+            } else {
+                var max=0, winners=[];
+                Object.keys(v.votes).forEach(function(k){
+                    if(v.votes[k]>max){max=v.votes[k];winners=[k];}
+                    else if(v.votes[k]===max)winners.push(k);
+                });
+                result.outcome = winners.length===1 ? "custom-winner" : "tie";
+                if(winners.length===1) result.winner = winners[0];
+            }
+            history.push(result);
+            currentVote = null;
+            broadcast({ type:"vote-closed", result:result });
+            showResult(result);
+            updateHistory();
+        }
+
+        // ---- UI ----
+        function showNewVoteForm(){
+            el.newVote.classList.remove("hidden");
+            el.activeVote.classList.add("hidden");
+            el.result.classList.add("hidden");
+            el.inpTopic.value = "";
+            el.inpDesc.value = "";
+            el.inpCustom.value = "";
+            document.querySelector('input[name="vtype"][value="yes-no"]').checked = true;
+            el.customOpts.classList.add("hidden");
+            currentVote = null;
+        }
+
+        function showActiveVote(){
+            el.newVote.classList.add("hidden");
+            el.result.classList.add("hidden");
+            el.activeVote.classList.remove("hidden");
+
+            el.lblVoteTopic.textContent = currentVote.topic;
+            el.lblVoteDesc.textContent = currentVote.description || "";
+            el.lblTotal.textContent = voterCount;
+
+            // QR code
+            var baseUrl = window.location.origin + window.location.pathname;
+            var voteUrl = baseUrl + "?vote=" + peer.id;
+            el.lblVoteUrl.textContent = voteUrl;
+
+            try {
+                QRCode.toCanvas(el.qrCanvas, voteUrl, {
+                    width:220, margin:2,
+                    color:{dark:"#e30613",light:"#ffffff"}
+                });
+            } catch(e) {
+                el.qrCanvas.style.display = "none";
+            }
+
+            updateLiveBars();
+        }
+
+        function updateLiveBars(){
+            if(!currentVote) return;
+            var cast = currentVote.totalCast;
+            el.lblCast.textContent = cast;
+            el.barProgress.style.width = (cast/voterCount*100) + "%";
+            var html = "";
+            currentVote.options.forEach(function(opt){
+                var count = currentVote.votes[opt]||0;
+                var pct = cast > 0 ? (count/cast*100) : 0;
+                html += '<div class="live-bar-group"><div class="live-bar-label"><span>'+esc(opt)+'</span><span>'+count+'</span></div><div class="live-bar-track"><div class="live-bar-fill '+barCls(opt,currentVote.type)+'" style="width:'+pct+'%"></div></div></div>';
+            });
+            el.liveBars.innerHTML = html;
+        }
+
+        function showResult(result){
+            el.activeVote.classList.add("hidden");
+            el.result.classList.remove("hidden");
+            el.lblResultTopic.textContent = result.topic;
+            var html = "";
+            result.options.forEach(function(opt){
+                var count = result.votes[opt]||0;
+                var pct = result.totalCast>0 ? (count/result.totalCast*100) : 0;
+                html += '<div class="result-bar-group"><div class="result-bar-label"><span>'+esc(opt)+'</span><span>'+count+' ('+Math.round(pct)+'%)</span></div><div class="result-bar-track"><div class="result-bar-fill '+barCls(opt,result.type)+'" style="width:'+pct+'%"></div></div></div>';
+            });
+            el.resultBars.innerHTML = html;
+            el.resultSummary.className = "result-summary";
+            if(result.outcome==="accepted"){ el.resultSummary.textContent="Antrag ANGENOMMEN"; el.resultSummary.classList.add("accepted"); }
+            else if(result.outcome==="rejected"){ el.resultSummary.textContent="Antrag ABGELEHNT"; el.resultSummary.classList.add("rejected"); }
+            else if(result.outcome==="tie"){ el.resultSummary.textContent="STIMMENGLEICHHEIT"; el.resultSummary.classList.add("neutral"); }
+            else { el.resultSummary.textContent="Gewinner: "+(result.winner||""); el.resultSummary.classList.add("accepted"); }
+        }
+
+        function updateHistory(){
+            if(!history.length){ el.historyList.innerHTML='<p class="empty-state">Noch keine Abstimmungen durchgeführt.</p>'; return; }
+            var html = "";
+            history.forEach(function(item,i){
+                var rc,rt;
+                if(item.outcome==="accepted"){rc="accepted";rt="Angenommen";}
+                else if(item.outcome==="rejected"){rc="rejected";rt="Abgelehnt";}
+                else if(item.outcome==="tie"){rc="neutral";rt="Gleichstand";}
+                else{rc="accepted";rt=item.winner||"Gewinner";}
+                var d=item.options.map(function(o){return o+": "+item.votes[o]}).join(" | ")+" (Gesamt: "+item.totalCast+"/"+item.totalVoters+")";
+                html+='<div class="history-item"><span class="history-topic">'+(i+1)+'. '+esc(item.topic)+'</span><span class="history-result '+rc+'">'+rt+'</span><div class="history-details">'+esc(d)+'</div></div>';
+            });
+            el.historyList.innerHTML = html;
+        }
+    }
+
+    // ===================== VOTER =====================
+    function initVoter(presenterPeerId){
+        var peer = new Peer();
+        var conn = null;
+        var hasVoted = false;
+        var screens = ["v-connecting","v-waiting","v-voting","v-confirmed","v-result","v-ended","v-error"];
+
+        function showScreen(id){
+            screens.forEach(function(s){ document.getElementById(s).style.display = s===id ? "flex" : "none"; });
+        }
+
+        peer.on("open", function(){
+            conn = peer.connect(presenterPeerId, { reliable:true });
+
+            conn.on("open", function(){
+                showScreen("v-waiting");
+            });
+
+            conn.on("data", function(data){
+                if(data.type === "waiting"){
+                    showScreen("v-waiting");
+                }
+                if(data.type === "vote-started"){
+                    hasVoted = false;
+                    showVoting(data);
+                }
+                if(data.type === "vote-confirmed"){
+                    showScreen("v-confirmed");
+                }
+                if(data.type === "already-voted"){
+                    hasVoted = true;
+                    showScreen("v-confirmed");
+                }
+                if(data.type === "vote-closed"){
+                    showVoteResult(data.result);
+                }
+                if(data.type === "vote-cancelled"){
+                    hasVoted = false;
+                    showScreen("v-waiting");
+                }
+                if(data.type === "session-ended"){
+                    showScreen("v-ended");
+                    if(peer) peer.destroy();
+                }
+            });
+
+            conn.on("close", function(){
+                showScreen("v-ended");
+            });
+
+            conn.on("error", function(){
+                document.getElementById("v-err-msg").textContent = "Verbindung zum Versammlungsleiter verloren.";
+                showScreen("v-error");
+            });
+        });
+
+        peer.on("error", function(err){
+            document.getElementById("v-err-msg").textContent = "Verbindungsfehler: " + err.type;
+            showScreen("v-error");
+        });
+
+        function showVoting(data){
+            document.getElementById("v-topic").textContent = data.topic;
+            var descEl = document.getElementById("v-desc");
+            descEl.textContent = data.description || "";
+            descEl.style.display = data.description ? "block" : "none";
+
+            var container = document.getElementById("v-options");
+            container.innerHTML = "";
+            data.options.forEach(function(opt){
+                var btn = document.createElement("button");
+                btn.textContent = opt;
+                btn.className = "btn-vote " + voteBtnCls(opt, data.voteType);
+                btn.addEventListener("click", function(){
+                    if(hasVoted) return;
+                    hasVoted = true;
+                    conn.send({ type:"cast-vote", option:opt });
+                });
+                container.appendChild(btn);
+            });
+            showScreen("v-voting");
+        }
+
+        function showVoteResult(result){
+            var s = document.getElementById("r-summary");
+            s.className = "voter-result";
+            if(result.outcome==="accepted"){ s.textContent="Antrag ANGENOMMEN"; s.classList.add("accepted"); }
+            else if(result.outcome==="rejected"){ s.textContent="Antrag ABGELEHNT"; s.classList.add("rejected"); }
+            else if(result.outcome==="tie"){ s.textContent="STIMMENGLEICHHEIT"; s.classList.add("neutral"); }
+            else { s.textContent="Gewinner: "+(result.winner||""); s.classList.add("accepted"); }
+
+            var d = result.options.map(function(o){
+                var c=result.votes[o]||0, p=result.totalCast>0?Math.round(c/result.totalCast*100):0;
+                return o+": "+c+" ("+p+"%)";
+            }).join(" · ");
+            document.getElementById("r-detail").textContent = result.topic + " — " + d;
+            showScreen("v-result");
+        }
+
+        function voteBtnCls(opt, type){
+            if(type==="yes-no"){ if(opt==="Ja")return"ja"; if(opt==="Nein")return"nein"; return"enthaltung"; }
+            return "custom";
+        }
+    }
+
+    // ===================== HELPERS =====================
+    function barCls(opt, type){
+        if(type==="yes-no"){ if(opt==="Ja")return"ja"; if(opt==="Nein")return"nein"; return"enthaltung"; }
+        return "custom";
+    }
+    function esc(s){ var d=document.createElement("div"); d.appendChild(document.createTextNode(s)); return d.innerHTML; }
+    function randomCode(len){
+        var c="abcdefghijklmnopqrstuvwxyz0123456789", r="";
+        for(var i=0;i<len;i++) r+=c[Math.floor(Math.random()*c.length)];
+        return r;
+    }
+})();
+</script>
+</body>
+</html>
