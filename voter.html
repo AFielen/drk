@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>DRK Abstimmung</title>
+    <style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+    --drk-red:#e30613;
+    --drk-red-dark:#b70510;
+    --white:#fff;
+    --bg:#f4f4f4;
+    --card:#fff;
+    --text:#2a2a2a;
+    --text-light:#777;
+    --border:#e0e0e0;
+    --success:#2e7d32;
+    --warning:#f9a825;
+    --radius:12px;
+}
+html,body{height:100%}
+body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);color:var(--text);
+    display:flex;flex-direction:column;min-height:100%;
+    -webkit-tap-highlight-color:transparent;
+}
+header{
+    background:var(--drk-red);color:var(--white);
+    padding:.75rem 1rem;display:flex;align-items:center;gap:.6rem;
+}
+header svg{flex-shrink:0}
+header h1{font-size:1.1rem;font-weight:700}
+main{
+    flex:1;display:flex;flex-direction:column;
+    justify-content:center;align-items:center;
+    padding:1.5rem 1rem;text-align:center;
+}
+.screen{
+    width:100%;max-width:420px;
+    display:flex;flex-direction:column;align-items:center;gap:1rem;
+}
+
+/* States */
+.state-icon{font-size:3rem;margin-bottom:.5rem}
+.state-title{font-size:1.3rem;font-weight:700}
+.state-sub{font-size:.95rem;color:var(--text-light);line-height:1.5}
+
+/* Vote buttons */
+.vote-topic{font-size:1.2rem;font-weight:700;line-height:1.4}
+.vote-desc{font-size:.9rem;color:var(--text-light)}
+.vote-options{width:100%;display:flex;flex-direction:column;gap:.75rem;margin-top:.5rem}
+.btn-vote{
+    width:100%;padding:1.1rem 1rem;font-size:1.15rem;font-weight:700;
+    border:none;border-radius:var(--radius);cursor:pointer;
+    color:var(--white);transition:transform .1s,opacity .1s;
+    font-family:inherit;
+}
+.btn-vote:active{transform:scale(.96);opacity:.85}
+.btn-vote.ja{background:var(--success)}
+.btn-vote.nein{background:#c62828}
+.btn-vote.enthaltung{background:var(--warning);color:var(--text)}
+.btn-vote.custom{background:var(--drk-red)}
+
+/* Confirmed */
+.confirmed-icon{
+    width:80px;height:80px;border-radius:50%;
+    background:var(--success);color:var(--white);
+    display:flex;align-items:center;justify-content:center;
+    font-size:2.5rem;margin-bottom:.5rem;
+    animation:pop .4s ease;
+}
+@keyframes pop{
+    0%{transform:scale(0)}
+    70%{transform:scale(1.15)}
+    100%{transform:scale(1)}
+}
+
+/* Result on voter */
+.voter-result{
+    width:100%;padding:1rem;border-radius:var(--radius);
+    font-weight:700;font-size:1.1rem;
+}
+.voter-result.accepted{background:#e8f5e9;color:#1b5e20}
+.voter-result.rejected{background:#ffebee;color:#b71c1c}
+.voter-result.neutral{background:#f5f5f5;color:var(--text)}
+
+.result-detail{font-size:.85rem;color:var(--text-light);margin-top:.5rem;line-height:1.5}
+
+/* Error */
+.error-box{
+    background:#ffebee;color:#c62828;padding:1rem;border-radius:var(--radius);
+    font-weight:600;width:100%;
+}
+
+/* Spinner */
+.spinner{
+    width:40px;height:40px;border:4px solid var(--border);
+    border-top-color:var(--drk-red);border-radius:50%;
+    animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+footer{
+    text-align:center;padding:.75rem;color:var(--text-light);font-size:.75rem;
+}
+    </style>
+</head>
+<body>
+<header>
+    <svg viewBox="0 0 36 36" width="30" height="30">
+        <circle cx="18" cy="18" r="17" fill="white"/>
+        <rect x="15" y="5" width="6" height="26" rx="1" fill="#e30613"/>
+        <rect x="5" y="15" width="26" height="6" rx="1" fill="#e30613"/>
+    </svg>
+    <h1>DRK Abstimmung</h1>
+</header>
+
+<main>
+    <!-- Loading -->
+    <div id="s-loading" class="screen">
+        <div class="spinner"></div>
+        <div class="state-title">Verbindung wird hergestellt...</div>
+    </div>
+
+    <!-- Waiting for vote -->
+    <div id="s-waiting" class="screen" style="display:none">
+        <div class="state-title">Willkommen!</div>
+        <div class="state-sub">Die nächste Abstimmung wird gleich gestartet.<br>Bitte warten...</div>
+        <div class="spinner" style="margin-top:.5rem"></div>
+    </div>
+
+    <!-- Voting -->
+    <div id="s-voting" class="screen" style="display:none">
+        <div class="vote-topic" id="v-topic"></div>
+        <div class="vote-desc" id="v-desc"></div>
+        <div class="vote-options" id="v-options"></div>
+    </div>
+
+    <!-- Confirmed -->
+    <div id="s-confirmed" class="screen" style="display:none">
+        <div class="confirmed-icon">&#10003;</div>
+        <div class="state-title">Stimme abgegeben!</div>
+        <div class="state-sub">Ihre Stimme wurde erfolgreich registriert.<br>Das Ergebnis wird gleich angezeigt.</div>
+    </div>
+
+    <!-- Already voted -->
+    <div id="s-already" class="screen" style="display:none">
+        <div class="state-title">Bereits abgestimmt</div>
+        <div class="state-sub">Sie haben in dieser Runde bereits Ihre Stimme abgegeben.</div>
+    </div>
+
+    <!-- Result -->
+    <div id="s-result" class="screen" style="display:none">
+        <div class="state-title">Ergebnis</div>
+        <div class="voter-result" id="r-summary"></div>
+        <div class="result-detail" id="r-detail"></div>
+    </div>
+
+    <!-- Session ended -->
+    <div id="s-ended" class="screen" style="display:none">
+        <div class="state-title">Sitzung beendet</div>
+        <div class="state-sub">Die Sitzung wurde vom Versammlungsleiter beendet.<br>Vielen Dank für Ihre Teilnahme!</div>
+    </div>
+
+    <!-- Error -->
+    <div id="s-error" class="screen" style="display:none">
+        <div class="error-box" id="err-msg">Verbindung fehlgeschlagen.</div>
+    </div>
+</main>
+
+<footer>DRK Vereinsabstimmung</footer>
+
+<script>
+(function(){
+    "use strict";
+
+    // Extract session code from URL: /vote/<code>
+    var parts = window.location.pathname.split("/");
+    var sessionCode = parts[parts.length - 1];
+    if(!sessionCode || !/^[a-f0-9]+$/.test(sessionCode)){
+        showScreen("s-error");
+        document.getElementById("err-msg").textContent = "Ungültiger Abstimmungslink.";
+        return;
+    }
+
+    // Voter ID (persists per tab session)
+    var voterId = sessionStorage.getItem("voterId_" + sessionCode);
+    if(!voterId){
+        voterId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
+        sessionStorage.setItem("voterId_" + sessionCode, voterId);
+    }
+
+    var hasVoted = false;
+    var currentOptions = null;
+    var evtSource = null;
+
+    // ---- Screen management ----
+    var screens = ["s-loading","s-waiting","s-voting","s-confirmed","s-already","s-result","s-ended","s-error"];
+    function showScreen(id){
+        screens.forEach(function(s){
+            document.getElementById(s).style.display = s===id ? "flex" : "none";
+        });
+    }
+
+    // ---- Fetch session state first ----
+    fetch("/api/session/" + sessionCode)
+        .then(function(r){
+            if(!r.ok) throw new Error("Session nicht gefunden");
+            return r.json();
+        })
+        .then(function(data){
+            if(data.currentVote){
+                showVoting(data.currentVote);
+            } else {
+                showScreen("s-waiting");
+            }
+            connectSSE();
+        })
+        .catch(function(){
+            showScreen("s-error");
+            document.getElementById("err-msg").textContent = "Sitzung nicht gefunden oder abgelaufen.";
+        });
+
+    // ---- SSE ----
+    function connectSSE(){
+        evtSource = new EventSource("/api/events/" + sessionCode);
+
+        evtSource.addEventListener("vote-started", function(e){
+            var data = JSON.parse(e.data);
+            hasVoted = false;
+            showVoting(data);
+        });
+
+        evtSource.addEventListener("vote-closed", function(e){
+            var result = JSON.parse(e.data);
+            showVoteResult(result);
+        });
+
+        evtSource.addEventListener("session-ended", function(){
+            if(evtSource) evtSource.close();
+            showScreen("s-ended");
+        });
+
+        evtSource.onerror = function(){
+            // Reconnect is automatic with EventSource
+        };
+    }
+
+    // ---- Show voting screen ----
+    function showVoting(vote){
+        document.getElementById("v-topic").textContent = vote.topic;
+        var descEl = document.getElementById("v-desc");
+        descEl.textContent = vote.description || "";
+        descEl.style.display = vote.description ? "block" : "none";
+
+        currentOptions = vote.options;
+        var container = document.getElementById("v-options");
+        container.innerHTML = "";
+
+        vote.options.forEach(function(opt){
+            var btn = document.createElement("button");
+            btn.textContent = opt;
+            btn.className = "btn-vote " + btnClass(opt, vote.type);
+            btn.addEventListener("click", function(){ castVote(opt); });
+            container.appendChild(btn);
+        });
+
+        showScreen("s-voting");
+    }
+
+    // ---- Cast vote ----
+    function castVote(option){
+        if(hasVoted) return;
+        hasVoted = true;
+
+        fetch("/api/cast/" + sessionCode, {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({ voterId: voterId, option: option })
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if(data.error === "Bereits abgestimmt"){
+                showScreen("s-already");
+            } else if(data.ok){
+                showScreen("s-confirmed");
+            } else {
+                hasVoted = false;
+                alert(data.error || "Fehler beim Abstimmen.");
+            }
+        })
+        .catch(function(){
+            hasVoted = false;
+            alert("Netzwerkfehler. Bitte erneut versuchen.");
+        });
+    }
+
+    // ---- Show result ----
+    function showVoteResult(result){
+        var summaryEl = document.getElementById("r-summary");
+        summaryEl.className = "voter-result";
+
+        if(result.outcome === "accepted"){
+            summaryEl.textContent = "Antrag ANGENOMMEN";
+            summaryEl.classList.add("accepted");
+        } else if(result.outcome === "rejected"){
+            summaryEl.textContent = "Antrag ABGELEHNT";
+            summaryEl.classList.add("rejected");
+        } else if(result.outcome === "tie"){
+            summaryEl.textContent = "STIMMENGLEICHHEIT";
+            summaryEl.classList.add("neutral");
+        } else {
+            summaryEl.textContent = "Gewinner: " + (result.winner || "");
+            summaryEl.classList.add("accepted");
+        }
+
+        var detail = result.options.map(function(o){
+            var count = result.votes[o] || 0;
+            var pct = result.totalCast > 0 ? Math.round(count/result.totalCast*100) : 0;
+            return o + ": " + count + " (" + pct + "%)";
+        }).join(" · ");
+        document.getElementById("r-detail").textContent = result.topic + " — " + detail;
+
+        showScreen("s-result");
+    }
+
+    function btnClass(option, type){
+        if(type === "yes-no"){
+            if(option === "Ja") return "ja";
+            if(option === "Nein") return "nein";
+            return "enthaltung";
+        }
+        return "custom";
+    }
+})();
+</script>
+</body>
+</html>
