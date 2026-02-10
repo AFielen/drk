@@ -56,4 +56,15 @@ Gehostet auf GitHub Pages: **https://afielen.github.io/test/index.html**
 - **Einzelne HTML-Datei** -- kein Build-Prozess, keine Abhaengigkeiten
 - **PeerJS** (WebRTC) fuer serverlose Echtzeit-Kommunikation
 - **QR-Code-Generator** (qrcode-generator v1.4.4) direkt eingebettet
+- **Browser-Fingerprinting** zur Verhinderung von Mehrfachabstimmungen (auch im Inkognito-Modus)
 - Optimiert fuer **Chrome** (QR-Code-Darstellung in Edge eingeschraenkt)
+
+## Hinweis zum Doppelabstimmungs-Schutz
+
+Die App verwendet ein mehrstufiges System, um Mehrfachabstimmungen zu verhindern:
+
+1. **Browser-Fingerprinting** -- Beim Verbinden wird ein anonymer Geraete-Hash aus verschiedenen Browser-Signalen (Canvas, WebGL, Audio API, Bildschirm, Schriftarten, Hardware) erzeugt. Dieser Hash ist auch im Inkognito-Modus identisch und verhindert erneutes Abstimmen ueber ein privates Fenster desselben Browsers.
+2. **localStorage / sessionStorage** -- Zusaetzliche Absicherung fuer normale Browser-Fenster und Page Reloads.
+3. **Presenter-seitige Pruefung** -- Der Versammlungsleiter-Rechner fuehrt eine eigene Liste aller bereits abgegebenen Stimmen (nach Fingerprint und Geraete-ID).
+
+**Wichtig:** Ein komplett anderer Browser (z.B. Chrome vs. Firefox) oder ein anderes Geraet erzeugt einen anderen Fingerprint -- das ist gewollt, da in diesem Fall von einer anderen Person ausgegangen wird. Fuer maximale Sicherheit sollte der Versammlungsleiter die Anzahl der Stimmberechtigten korrekt einstellen und die Teilnehmerzahl im Blick behalten.
