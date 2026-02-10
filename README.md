@@ -4,7 +4,7 @@ Digitales Abstimmungssystem für Vereinssitzungen des Deutschen Roten Kreuzes. E
 
 ## Funktionsweise
 
-1. **Versammlungsleiter** öffnet die App auf dem Laptop/Beamer und startet eine Sitzung
+1. **Versammlungsleiter** öffnet die App auf dem Laptop/Beamer und startet eine Versammlung
 2. Ein **QR-Code** wird auf der Leinwand angezeigt
 3. **Mitglieder** scannen den QR-Code mit dem Smartphone und stimmen anonym ab
 4. Die **Ergebnisse** werden in Echtzeit auf dem Beamer angezeigt
@@ -14,18 +14,18 @@ Digitales Abstimmungssystem für Vereinssitzungen des Deutschen Roten Kreuzes. E
 - **Vollstaendig anonyme Abstimmung** -- es werden keinerlei persoenliche Daten erhoben oder gespeichert
 - **Ja / Nein / Enthaltung** oder eigene Optionen
 - **Echtzeit-Ergebnisse** mit Live-Balkendiagrammen
-- **Konfigurierbares Zeitlimit** -- einstellbar pro Sitzung (Standard: 5 Minuten), pro Abstimmung ein-/ausschaltbar
+- **Konfigurierbares Zeitlimit** -- einstellbar pro Versammlung (Standard: 5 Minuten), pro Abstimmung ein-/ausschaltbar
 - **Doppelabstimmungs-Schutz** -- jedes Geraet kann pro Runde nur einmal abstimmen
 - **Keine Installation noetig** -- laeuft komplett im Browser
 - **Kein Server noetig** -- Peer-to-Peer-Kommunikation via WebRTC (PeerJS)
-- **Abstimmungshistorie** -- alle Ergebnisse der Sitzung auf einen Blick
+- **Abstimmungshistorie** -- alle Ergebnisse der Versammlung auf einen Blick
 
 ## Datenschutz und Anonymitaet
 
 - **Keine Registrierung, kein Login** -- Mitglieder scannen einfach den QR-Code und stimmen ab
 - **Keine Datenbank, kein Server** -- die gesamte Kommunikation laeuft direkt zwischen den Geraeten (Peer-to-Peer via WebRTC), es werden keine Daten auf einem Server gespeichert
 - **Keine Zuordnung von Stimmen zu Personen** -- der Versammlungsleiter sieht ausschliesslich die aggregierten Ergebnisse (z.B. "5x Ja, 3x Nein"), niemals wer wie abgestimmt hat
-- **Keine persistente Datenspeicherung** -- nach Beenden der Sitzung oder Schliessen des Browsers sind alle Daten unwiederbringlich weg
+- **Keine persistente Datenspeicherung** -- nach Beenden der Versammlung oder Schliessen des Browsers sind alle Daten unwiederbringlich weg
 - **Kein Tracking, keine Cookies, keine Analyse-Tools** -- die App verwendet keinerlei Tracking- oder Analysedienste
 - **Open Source** -- der gesamte Quellcode ist einsehbar und ueberpruefbar
 
@@ -38,11 +38,11 @@ Gehostet auf GitHub Pages: **https://afielen.github.io/drk/index.html**
 ### Versammlungsleiter (Laptop/Beamer)
 
 1. Seite im Browser oeffnen
-2. Sitzungstitel und Anzahl der Stimmberechtigten eingeben
+2. Versammlungstitel und Anzahl der Stimmberechtigten eingeben
 3. Abstimmungsthema eingeben und Abstimmung starten
 4. QR-Code wird angezeigt -- Mitglieder scannen diesen
 5. Abstimmung schliessen, wenn alle abgestimmt haben
-6. Naechste Abstimmung starten oder Sitzung beenden
+6. Naechste Abstimmung starten oder Versammlung beenden
 
 ### Mitglieder (Smartphone)
 
