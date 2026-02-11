@@ -673,12 +673,18 @@ footer{text-align:center;padding:.75rem;color:var(--text-light);font-size:.8rem}
         (function(){
             var btn = $("help-mode-btn"), pop = $("help-mode-pop"), cls = $("help-mode-close");
             btn.addEventListener("click", function(e){
+                e.preventDefault();
                 e.stopPropagation();
                 pop.classList.toggle("open");
             });
             cls.addEventListener("click", function(e){
+                e.preventDefault();
                 e.stopPropagation();
                 pop.classList.remove("open");
+            });
+            pop.addEventListener("click", function(e){
+                e.preventDefault();
+                e.stopPropagation();
             });
             document.addEventListener("click", function(e){
                 if(!pop.contains(e.target) && e.target !== btn) pop.classList.remove("open");
